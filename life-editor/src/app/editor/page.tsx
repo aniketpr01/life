@@ -494,6 +494,33 @@ export default function EditorPage() {
           >
             🗑️ Clear
           </button>
+          
+          <Link href="/viewer" className="prominent-viewer-btn">
+            👁️ View All Posts
+          </Link>
+          
+          <button 
+            onClick={saveToGitHub} 
+            disabled={saving} 
+            className="prominent-github-btn"
+            title="Push to GitHub"
+          >
+            {saving ? (
+              <>
+                <span className="spinner">⏳</span>
+                Pushing...
+              </>
+            ) : (
+              <>
+                🚀 Push to GitHub
+              </>
+            )}
+          </button>
+          
+          <div className="status-indicators">
+            {saveStatus === 'saved' && <span className="save-indicator saved">✅ Saved!</span>}
+            {saveStatus === 'error' && <span className="save-indicator error">❌ Error</span>}
+          </div>
         </div>
 
         {/* Template Buttons */}
@@ -602,39 +629,6 @@ export default function EditorPage() {
           </div>
         </div>
 
-        {/* Prominent Action Buttons */}
-        <div className="action-bar">
-          <div className="action-buttons">
-            <Link href="/viewer" className="action-btn viewer-btn">
-              <Eye size={18} />
-              View All Posts
-            </Link>
-            
-            <button 
-              onClick={saveToGitHub} 
-              disabled={saving} 
-              className="action-btn github-btn"
-              title="Push to GitHub"
-            >
-              {saving ? (
-                <>
-                  <Loader2 size={18} className="animate-spin" />
-                  Pushing...
-                </>
-              ) : (
-                <>
-                  <Upload size={18} />
-                  Push to GitHub
-                </>
-              )}
-            </button>
-          </div>
-          
-          <div className="save-status-display">
-            {saveStatus === 'saved' && <span className="status-saved">✅ Saved to GitHub!</span>}
-            {saveStatus === 'error' && <span className="status-error">❌ Push failed</span>}
-          </div>
-        </div>
 
         {/* Main Editor Area - Exact HackMD Layout */}
         <div className="hackmd-main">
@@ -933,7 +927,7 @@ export default function EditorPage() {
           font-size: 13px;
         }
 
-        .template-btn, .view-posts-btn, .clear-btn {
+        .template-btn, .clear-btn {
           padding: 4px 8px;
           background: #316dca;
           color: #cdd9e5;
@@ -953,90 +947,89 @@ export default function EditorPage() {
           background: #c82333;
         }
 
-        /* Prominent Action Bar */
-        .action-bar {
-          background: #22272e;
-          border-bottom: 1px solid #373e47;
-          padding: 12px 16px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          min-height: 52px;
-        }
-
-        .action-buttons {
-          display: flex;
-          gap: 12px;
-          align-items: center;
-        }
-
-        .action-btn {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 10px 20px;
+        /* Prominent Action Buttons in Template Bar */
+        .prominent-viewer-btn, .prominent-github-btn {
+          padding: 8px 16px;
           border: none;
           border-radius: 6px;
           font-size: 14px;
           font-weight: 600;
           cursor: pointer;
-          transition: all 0.3s ease;
           text-decoration: none;
-          min-width: 140px;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          transition: all 0.2s ease;
+          min-width: 120px;
           justify-content: center;
         }
 
-        .viewer-btn {
-          background: #2d333b;
-          color: #adbac7;
-          border: 1px solid #444c56;
+        .prominent-viewer-btn {
+          background: #4dabf7;
+          color: white;
+          border: 1px solid #339af0;
         }
 
-        .viewer-btn:hover {
-          background: #373e47;
-          color: #cdd9e5;
+        .prominent-viewer-btn:hover {
+          background: #339af0;
           transform: translateY(-1px);
-          box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+          box-shadow: 0 4px 12px rgba(77, 171, 247, 0.4);
         }
 
-        .github-btn {
-          background: #238636;
-          color: #ffffff;
-          border: 1px solid #2ea043;
-          box-shadow: 0 2px 4px rgba(35, 134, 54, 0.2);
+        .prominent-github-btn {
+          background: #40c057;
+          color: white;
+          border: 1px solid #37b24d;
+          box-shadow: 0 2px 8px rgba(64, 192, 87, 0.3);
         }
 
-        .github-btn:hover {
-          background: #2ea043;
+        .prominent-github-btn:hover {
+          background: #37b24d;
           transform: translateY(-1px);
-          box-shadow: 0 6px 12px rgba(35, 134, 54, 0.3);
+          box-shadow: 0 6px 16px rgba(64, 192, 87, 0.4);
         }
 
-        .github-btn:disabled {
-          background: #656d76;
-          border-color: #656d76;
+        .prominent-github-btn:disabled {
+          background: #868e96;
+          border-color: #868e96;
           cursor: not-allowed;
           transform: none;
           box-shadow: none;
         }
 
-        .save-status-display {
+        .spinner {
+          animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+
+        /* Status Indicators */
+        .status-indicators {
           display: flex;
           align-items: center;
           gap: 8px;
         }
 
-        .status-saved {
-          color: #3fb950;
+        .save-indicator {
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-size: 12px;
           font-weight: 600;
-          font-size: 14px;
         }
 
-        .status-error {
-          color: #f85149;
-          font-weight: 600;
-          font-size: 14px;
+        .save-indicator.saved {
+          background: rgba(64, 192, 87, 0.2);
+          color: #40c057;
         }
+
+        .save-indicator.error {
+          background: rgba(248, 81, 73, 0.2);
+          color: #f85149;
+        }
+
 
         .template-popup {
           position: absolute;
