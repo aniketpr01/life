@@ -203,12 +203,46 @@ export default function EditorPage() {
   const githubService = useRef(new GitHubService());
 
   useEffect(() => {
-    const savedContent = localStorage.getItem('hackmd-content');
-    if (savedContent) {
-      setContent(savedContent);
+    // Check if we're editing an existing file from URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const editPath = urlParams.get('edit');
+    const editTitle = urlParams.get('title');
+    
+    if (editPath && editTitle) {
+      // Load existing file for editing
+      loadExistingFile(editPath, editTitle);
+    } else {
+      const savedContent = localStorage.getItem('hackmd-content');
+      if (savedContent) {
+        setContent(savedContent);
+      }
+      // Start with blank content by default (Plain format)
     }
-    // Start with blank content by default (Plain format)
   }, []);
+
+  const loadExistingFile = async (path: string, title: string) => {
+    try {
+      const existingFile = await githubService.current.getFile(path);
+      if (existingFile && existingFile.content) {
+        const content = atob(existingFile.content); // Decode base64
+        setContent(content);
+        setTitle(title);
+        
+        // Set post type based on path
+        if (path.includes('til')) setPostType('til');
+        else if (path.includes('daily-journal')) setPostType('journal');
+        else if (path.includes('dev-blog')) setPostType('blog');
+        else if (path.includes('100-days')) setPostType('100days');
+        else if (path.includes('learning-log')) setPostType('learning');
+        else if (path.includes('notes')) setPostType('plain');
+        
+        localStorage.setItem('hackmd-content', content);
+      }
+    } catch (error) {
+      console.error('Error loading existing file:', error);
+      alert('Error loading file for editing');
+    }
+  };
 
   const generateFilename = useCallback(() => {
     const date = new Date().toISOString().split('T')[0];
@@ -280,6 +314,33 @@ export default function EditorPage() {
 
     try {
       const existingFile = await githubService.current.getFile(filename);
+      
+      // If file exists and we're not already editing it, ask user
+      if (existingFile && !window.location.search.includes('edit=')) {
+        setSaving(false);
+        setSaveStatus('idle');
+        
+        const action = window.confirm(
+          `File "${filename}" already exists. Click OK to edit the existing file, or Cancel to create a new file with a different name.`
+        );
+        
+        if (action) {
+          // Redirect to edit the existing file
+          const editUrl = `/editor?edit=${encodeURIComponent(filename)}&title=${encodeURIComponent(title || filename.split('/').pop()?.replace('.md', '') || 'Untitled')}`;
+          window.location.href = editUrl;
+          return;
+        } else {
+          // Ask for new filename
+          const newTitle = prompt('Enter a new title for your post:');
+          if (newTitle) {
+            setTitle(newTitle);
+            return; // This will regenerate filename
+          } else {
+            return; // Cancel operation
+          }
+        }
+      }
+      
       const message = `${existingFile ? 'Update' : 'Add'} ${filename.split('/').pop()}`;
       
       const result = await githubService.current.createOrUpdateFile(
@@ -296,6 +357,8 @@ export default function EditorPage() {
           setTitle('');
           setCategory('');
           localStorage.removeItem('hackmd-content');
+          // Clear URL params
+          window.history.replaceState({}, '', '/editor');
         }
       } else {
         setSaveStatus('error');
@@ -477,6 +540,7 @@ export default function EditorPage() {
           </button>
           
           <div className="status-indicators">
+            <span className="filename-display">📁 {filename}</span>
             {saveStatus === 'saved' && <span className="save-indicator saved">✅ Saved!</span>}
             {saveStatus === 'error' && <span className="save-indicator error">❌ Error</span>}
           </div>
@@ -631,11 +695,6 @@ export default function EditorPage() {
                   </div>
                 </div>
                 
-                {content.includes('#') && (
-                  <h1 className="preview-document-title">
-                    {content.split('\n').find(line => line.startsWith('#'))?.replace(/^#+\s*/, '') || 'Untitled'}
-                  </h1>
-                )}
               </div>
               
               <div className="preview-content-area">
@@ -956,6 +1015,16 @@ export default function EditorPage() {
         .save-indicator.error {
           background: rgba(248, 81, 73, 0.2);
           color: #f85149;
+        }
+
+        .filename-display {
+          padding: 4px 8px;
+          background: rgba(77, 171, 247, 0.1);
+          color: #4dabf7;
+          border-radius: 4px;
+          font-size: 12px;
+          font-weight: 500;
+          font-family: monospace;
         }
 
 

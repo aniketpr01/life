@@ -589,6 +589,13 @@ export default function ViewerPage() {
                 </h2>
               </div>
               <div className="flex items-center gap-2">
+                <Link
+                  href={`/editor?edit=${encodeURIComponent(state.selectedPost.path)}&title=${encodeURIComponent(state.selectedPost.title)}`}
+                  className="edit-btn p-2 rounded-md hover:bg-gray-600 transition-colors"
+                  title="Edit this post"
+                >
+                  <PenTool className="h-5 w-5" />
+                </Link>
                 <button
                   onClick={toggleFullscreen}
                   className="fullscreen-btn p-2 rounded-md hover:bg-gray-600 transition-colors"
@@ -718,6 +725,9 @@ export default function ViewerPage() {
         
         .fullscreen-btn { color: #768390; }
         .fullscreen-btn:hover { color: #cdd9e5; background: #2d333b; }
+        
+        .edit-btn { color: #768390; }
+        .edit-btn:hover { color: #cdd9e5; background: #2d333b; }
       `}</style>
     </div>
   );
