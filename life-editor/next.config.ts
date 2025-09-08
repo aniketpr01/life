@@ -49,6 +49,17 @@ const nextConfig: NextConfig = {
             stats.compilation.errors = [];
             stats.compilation.warnings = [];
           });
+          
+          // Also suppress during compilation
+          compiler.hooks.compilation.tap('SuppressAllErrors', (compilation) => {
+            compilation.hooks.processErrors.tap('SuppressAllErrors', (errors) => {
+              return errors.filter(error => 
+                !error.message?.includes('MetaMask') &&
+                !error.message?.includes('chrome-extension://') &&
+                !error.message?.includes('Failed to connect')
+              );
+            });
+          });
         }
       });
     }

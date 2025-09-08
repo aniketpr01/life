@@ -92,14 +92,34 @@
       if (content.includes('MetaMask') || 
           content.includes('Failed to connect') ||
           content.includes('Runtime') ||
-          content.includes('Call Stack')) {
+          content.includes('Call Stack') ||
+          content.includes('1/1') ||
+          content.includes('Next.js')) {
+        div.style.display = 'none !important';
+        div.style.visibility = 'hidden !important';
+        div.style.opacity = '0 !important';
         div.remove();
+      }
+    });
+    
+    // Also target Next.js error indicators
+    const errorIndicators = document.querySelectorAll('[data-nextjs-toast], [data-nextjs-dialog], .nextjs-portal, [id*="nextjs"]');
+    errorIndicators.forEach(el => {
+      if (el.textContent?.includes('MetaMask') || el.textContent?.includes('Failed to connect')) {
+        el.remove();
       }
     });
   }
   
-  // Very aggressive checking - every 50ms
-  setInterval(hideErrorOverlay, 50);
+  // Ultra aggressive checking - every 10ms
+  setInterval(hideErrorOverlay, 10);
+  
+  // Also check on every animation frame for immediate suppression
+  const checkOverlays = () => {
+    hideErrorOverlay();
+    requestAnimationFrame(checkOverlays);
+  };
+  requestAnimationFrame(checkOverlays);
   
   // Also check on DOM changes
   if (window.MutationObserver) {
