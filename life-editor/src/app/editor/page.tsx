@@ -188,6 +188,7 @@ Wrap up your thoughts and provide next steps or further reading.
 };
 
 export default function EditorPage() {
+  const [mounted, setMounted] = useState(false);
   const [content, setContent] = useState('');
   const [previewContent, setPreviewContent] = useState('');
   const [viewMode, setViewMode] = useState<'edit' | 'split' | 'preview'>('split');
@@ -208,6 +209,8 @@ export default function EditorPage() {
   const githubService = useRef(new GitHubService());
 
   useEffect(() => {
+    setMounted(true);
+    
     // Check if we're editing an existing file from URL params
     const urlParams = new URLSearchParams(window.location.search);
     const editPath = urlParams.get('edit');
@@ -673,6 +676,17 @@ export default function EditorPage() {
   const spaceCount = useMemo(() => (content.match(/ /g) || []).length, [content]);
   const lineNumbers = useMemo(() => Array.from({ length: Math.max(lineCount, 20) }, (_, i) => i + 1), [lineCount]);
 
+  if (!mounted) {
+    return (
+      <div className="hackmd-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#f7f8fc' }}>
+        <div style={{ textAlign: 'center', color: '#666' }}>
+          <div style={{ marginBottom: '16px', fontSize: '24px' }}>⏳</div>
+          <div>Loading editor...</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="hackmd-container">
@@ -827,7 +841,7 @@ export default function EditorPage() {
           
           <div className="status-indicators">
             <span className="filename-display">📁 {filename}</span>
-            {!title.trim() && (
+            {!title.trim() && mounted && (
               <span className="daily-indicator">
                 📅 Daily Entry - Will append to today's file at {new Intl.DateTimeFormat('en-US', {
                   timeZone: 'Asia/Kolkata',
