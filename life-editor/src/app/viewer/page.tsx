@@ -44,6 +44,7 @@ interface ViewerState {
 }
 
 export default function ViewerPage() {
+  const [mounted, setMounted] = useState(false);
   const [state, setState] = useState<ViewerState>({
     posts: [],
     filteredPosts: [],
@@ -57,6 +58,10 @@ export default function ViewerPage() {
     showModal: false,
   });
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const [stats, setStats] = useState({
     total: 0,
     thisWeek: 0,
@@ -67,15 +72,22 @@ export default function ViewerPage() {
   const githubService = new GitHubService();
 
   useEffect(() => {
-    loadPosts();
+    if (!mounted) return;
     
-    // Check for URL parameters
-    const urlParams = new URLSearchParams(window.location.search);
-    const typeFilter = urlParams.get('type');
-    if (typeFilter) {
-      setState(prev => ({ ...prev, selectedType: typeFilter }));
-    }
-  }, []);
+    // Prevent hydration mismatch by delaying initial load
+    const timer = setTimeout(() => {
+      loadPosts();
+      
+      // Check for URL parameters
+      const urlParams = new URLSearchParams(window.location.search);
+      const typeFilter = urlParams.get('type');
+      if (typeFilter) {
+        setState(prev => ({ ...prev, selectedType: typeFilter }));
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [mounted]);
 
   useEffect(() => {
     filterPosts();
@@ -167,12 +179,26 @@ export default function ViewerPage() {
   };
 
   const extractTagsFromContent = (content: string): string[] => {
-    const tagRegex = /#[a-zA-Z][\w-]+/g; // Only tags that start with a letter
-    const matches = content.match(tagRegex) || [];
+    // Only extract tags from specific sections, avoid code blocks and colors
+    const lines = content.split('\n');
+    const tagLines = lines.filter(line => 
+      line.includes('*Tags:') || 
+      line.includes('**Tags:**') || 
+      (line.startsWith('#') && line.includes('tag'))
+    );
+    
+    const tagText = tagLines.join(' ');
+    const tagRegex = /#[a-zA-Z][a-zA-Z0-9-]{2,}/g; // Must start with letter, be 3+ chars
+    const matches = tagText.match(tagRegex) || [];
+    
     return matches
       .map(tag => tag.substring(1))
-      .filter(tag => tag.length > 2 && /^[a-zA-Z]/.test(tag)) // Filter out short/invalid tags
-      .slice(0, 5); // Limit to 5 tags max
+      .filter(tag => 
+        tag.length > 2 && 
+        /^[a-zA-Z]/.test(tag) &&
+        !tag.match(/^[0-9a-f]{3,6}$/i) // Filter out hex colors
+      )
+      .slice(0, 3); // Limit to 3 tags max
   };
 
   const extractDateFromPath = (path: string): Date => {
@@ -291,6 +317,19 @@ export default function ViewerPage() {
   };
 
   const totalPages = Math.ceil(state.filteredPosts.length / state.postsPerPage);
+
+  if (!mounted) {
+    return (
+      <div className="page-viewer min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
+            <p>Loading...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="page-viewer min-h-screen bg-gray-50 dark:bg-gray-900">

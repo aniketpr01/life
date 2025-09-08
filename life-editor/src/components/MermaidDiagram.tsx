@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface MermaidDiagramProps {
   chart: string;
@@ -9,8 +9,15 @@ interface MermaidDiagramProps {
 
 export default function MermaidDiagram({ chart, id = 'mermaid-' + Math.random().toString(36).substr(2, 9) }: MermaidDiagramProps) {
   const elementRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    
     let mermaid: any;
     
     const loadMermaid = async () => {
@@ -55,7 +62,28 @@ ${chart}
     };
     
     loadMermaid();
-  }, [chart, id]);
+  }, [chart, id, mounted]);
+
+  if (!mounted) {
+    return (
+      <div 
+        className="mermaid-container"
+        style={{
+          textAlign: 'center',
+          margin: '24px 0',
+          background: '#ffffff',
+          padding: '20px',
+          borderRadius: '8px',
+          border: '1px solid #e1e4e8',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center'
+        }}
+      >
+        <span style={{ color: '#666' }}>Loading diagram...</span>
+      </div>
+    );
+  }
 
   return (
     <div 

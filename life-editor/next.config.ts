@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   experimental: {
     appDir: true,
+    forceSwcTransforms: true,
   },
   // Completely disable error overlay in development
   devIndicators: {
