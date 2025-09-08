@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { 
   Bold, Italic, Underline, Strikethrough, Heading1, Heading2, Heading3,
   List, ListOrdered, Quote, Code, Link2, Image, Table, Minus, CheckSquare,
@@ -189,6 +189,7 @@ Wrap up your thoughts and provide next steps or further reading.
 
 export default function EditorPage() {
   const [content, setContent] = useState('');
+  const [previewContent, setPreviewContent] = useState('');
   const [viewMode, setViewMode] = useState<'edit' | 'split' | 'preview'>('split');
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -199,6 +200,7 @@ export default function EditorPage() {
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [searchCache, setSearchCache] = useState<Map<string, any[]>>(new Map());
   const [title, setTitle] = useState('');
+  const [category, setCategory] = useState('');
   const [cursorPosition, setCursorPosition] = useState({ line: 1, column: 1 });
   const [showTemplates, setShowTemplates] = useState(false);
   
@@ -218,10 +220,17 @@ export default function EditorPage() {
       const savedContent = localStorage.getItem('hackmd-content');
       if (savedContent) {
         setContent(savedContent);
+        setPreviewContent(savedContent);
       }
       // Start with blank content by default (Plain format)
     }
   }, []);
+
+  // Debounce preview rendering to keep typing smooth
+  useEffect(() => {
+    const t = setTimeout(() => setPreviewContent(content), 120);
+    return () => clearTimeout(t);
+  }, [content]);
 
   const loadExistingFile = async (path: string, title: string) => {
     try {
@@ -289,29 +298,41 @@ export default function EditorPage() {
     generateFilename();
   }, [generateFilename]);
 
+  const rafRef = useRef<number | null>(null);
   const updateCursorPosition = () => {
     const textarea = textareaRef.current;
     if (!textarea) return;
 
-    const position = textarea.selectionStart;
-    const textBeforeCursor = content.substring(0, position);
-    const lines = textBeforeCursor.split('\n');
-    const line = lines.length;
-    const column = lines[lines.length - 1].length + 1;
-    
-    setCursorPosition({ line, column });
+    const compute = () => {
+      const position = textarea.selectionStart;
+      const textBeforeCursor = content.substring(0, position);
+      const lines = textBeforeCursor.split('\n');
+      const line = lines.length;
+      const column = lines[lines.length - 1].length + 1;
+      setCursorPosition({ line, column });
+    };
+
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(compute);
   };
 
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newContent = e.target.value;
     setContent(newContent);
-    localStorage.setItem('hackmd-content', newContent);
     updateCursorPosition();
   };
 
   const handleCursorMove = () => {
     updateCursorPosition();
   };
+
+  // Debounce localStorage writes for content to avoid blocking keystrokes
+  useEffect(() => {
+    const t = setTimeout(() => {
+      try { localStorage.setItem('hackmd-content', content); } catch {}
+    }, 300);
+    return () => clearTimeout(t);
+  }, [content]);
 
   const saveToGitHub = async () => {
     if (!content || !filename) {
@@ -335,7 +356,7 @@ export default function EditorPage() {
       let message = '';
       
       if (existingFile && isDaily && !window.location.search.includes('edit=')) {
-        // This is a daily file - ALWAYS APPEND, never overwrite
+        // This is a daily file - GUARANTEED APPEND ONLY, absolutely NO overwriting
         const now = new Date();
         
         // Convert to IST using proper timezone
@@ -346,22 +367,37 @@ export default function EditorPage() {
           hour12: true
         }).format(now);
         
-        const existingContent = atob(existingFile.content.replace(/\s/g, '') || '');
+        // CRITICAL: Always fetch the latest file content to avoid overwriting
+        const latestFile = await githubService.current.getFile(filename);
+        if (!latestFile || !latestFile.content) {
+          setSaveStatus('error');
+          alert('Error: Could not fetch latest file content for appending');
+          setSaving(false);
+          return;
+        }
         
-        // Always append - never overwrite existing content
-        finalContent = existingContent + 
+        const existingContent = atob(latestFile.content.replace(/\s/g, '') || '');
+        
+        // FOOLPROOF APPEND: Always preserve existing content
+        finalContent = existingContent.trim() + 
                       '\n\n---\n\n' + 
                       `## ${currentTimeIST}\n\n` + 
-                      content;
+                      content.trim();
         
-        message = `Add daily entry - ${currentTimeIST}`;
+        message = `Append daily entry - ${currentTimeIST}`;
         
-        // Execute the append immediately
+        console.log('APPENDING TO DAILY FILE:');
+        console.log('Existing content length:', existingContent.length);
+        console.log('New content length:', content.length);
+        console.log('Final content length:', finalContent.length);
+        console.log('Will use SHA:', latestFile.sha);
+        
+        // Execute the append with latest SHA
         const result = await githubService.current.createOrUpdateFile(
           filename,
           finalContent,
           message,
-          existingFile.sha
+          latestFile.sha
         );
 
         if (result.success) {
@@ -370,9 +406,11 @@ export default function EditorPage() {
           setContent('');
           localStorage.removeItem('hackmd-content');
           setTimeout(() => setSaveStatus('idle'), 2000);
+          console.log('✅ Successfully appended to daily file');
         } else {
           setSaveStatus('error');
           alert('Error appending to daily file: ' + result.error);
+          console.error('❌ Failed to append:', result.error);
         }
         
         setSaving(false);
@@ -456,10 +494,25 @@ export default function EditorPage() {
 
     try {
       const files = await githubService.current.getAllPosts();
-      const results = [];
+      const results: any[] = [];
+
+      const getContent = async (file: any) => {
+        // Prefer embedded base64 content if present (older API path)
+        if (file?.content && file?.encoding === 'base64') {
+          return atob(file.content.replace(/\s/g, ''));
+        }
+        // Otherwise use cached download content by SHA
+        const key = `post-content:${file.sha}`;
+        const cached = typeof window !== 'undefined' ? sessionStorage.getItem(key) : null;
+        if (cached) return cached;
+        const res = await fetch(file.download_url);
+        const text = await res.text();
+        if (typeof window !== 'undefined') { try { sessionStorage.setItem(key, text); } catch {} }
+        return text;
+      };
 
       for (const file of files) {
-        const content = file.content ? atob(file.content.replace(/\s/g, '')) : '';
+        const content = await getContent(file);
         const lowerQuery = query.toLowerCase();
         
         // Search in filename, content, and path
@@ -615,9 +668,10 @@ export default function EditorPage() {
     URL.revokeObjectURL(url);
   };
 
-  const charCount = content.length;
-  const lineCount = content.split('\n').length;
-  const spaceCount = (content.match(/ /g) || []).length;
+  const charCount = useMemo(() => content.length, [content]);
+  const lineCount = useMemo(() => content.split('\n').length, [content]);
+  const spaceCount = useMemo(() => (content.match(/ /g) || []).length, [content]);
+  const lineNumbers = useMemo(() => Array.from({ length: Math.max(lineCount, 20) }, (_, i) => i + 1), [lineCount]);
 
   return (
     <>
@@ -817,8 +871,8 @@ export default function EditorPage() {
             <div className={`hackmd-editor-side ${viewMode === 'split' ? 'split-mode' : 'full-mode'}`}>
             <div className="editor-wrapper">
               <div className="line-numbers-column">
-                {Array.from({ length: Math.max(lineCount, 20) }, (_, i) => (
-                  <div key={i + 1} className="line-number">{i + 1}</div>
+                {lineNumbers.map((n) => (
+                  <div key={n} className="line-number">{n}</div>
                 ))}
               </div>
               <textarea
@@ -1010,7 +1064,7 @@ export default function EditorPage() {
                     )
                   }}
                 >
-                  {content || '*Start typing to see preview...*'}
+                  {previewContent || '*Start typing to see preview...*'}
                 </ReactMarkdown>
               </div>
             </div>

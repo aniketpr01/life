@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import Script from "next/script";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import ClientErrorHandler from "@/components/ClientErrorHandler";
 
@@ -16,7 +17,9 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <head>
-        <script src="/suppress-errors.js" defer></script>
+        <Script id="suppress-ext-errors" src="/suppress-errors.js" strategy="beforeInteractive" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
       <body className="antialiased h-full">
         <ClientErrorHandler />

@@ -48,7 +48,7 @@
       event.preventDefault();
       return false;
     }
-  });
+  }, true);
   
   // Suppress runtime errors
   window.addEventListener('error', function(event) {
@@ -56,7 +56,32 @@
       event.preventDefault();
       return false;
     }
+  }, true);
+
+  // If extensions throw synchronously during very early init, queue a microtask
+  // to re-override console and listeners again.
+  Promise.resolve().then(() => {
+    console.error = console.error; // noop to keep reference alive
   });
+
+  // Guard against accidental access to window.ethereum during SSR hydration issues.
+  // We DO NOT block MetaMask; we only guard reads that cause exceptions by returning
+  // a benign proxy when provider access throws. This is only engaged if an access
+  // triggers an exception synchronously.
+  try {
+    // Just touching window.ethereum shouldn't throw, but some environments do.
+    // Wrap in try/catch and leave as-is when safe.
+    void window.ethereum;
+  } catch (e) {
+    Object.defineProperty(window, 'ethereum', {
+      configurable: true,
+      get() {
+        return new Proxy({}, {
+          get() { return () => Promise.reject(new Error('provider disabled')); }
+        });
+      }
+    });
+  }
   
   // Completely hide ALL Next.js error overlays
   function hideErrorOverlay() {
@@ -111,8 +136,8 @@
     });
   }
   
-  // Ultra aggressive checking - every 10ms
-  setInterval(hideErrorOverlay, 10);
+  // Aggressive overlay cleanup during dev
+  setInterval(hideErrorOverlay, 50);
   
   // Also check on every animation frame for immediate suppression
   const checkOverlays = () => {

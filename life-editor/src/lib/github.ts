@@ -6,12 +6,47 @@ const API_BASE = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}`;
 
 export class GitHubService {
   private token: string | null = null;
+  private memoryCache = new Map<string, { time: number; data: any }>();
+  private cacheTTL = 5 * 60 * 1000; // 5 minutes
 
   constructor(token?: string) {
     // Always use the environment token first
     this.token = process.env.NEXT_PUBLIC_GITHUB_TOKEN || 
                  token || 
                  (typeof window !== 'undefined' ? localStorage.getItem('githubToken') : null);
+  }
+
+  private cacheKey(url: string) {
+    return `gh:v1:${url}`;
+  }
+
+  private setCache(url: string, data: any) {
+    const key = this.cacheKey(url);
+    const entry = { time: Date.now(), data };
+    this.memoryCache.set(key, entry);
+    if (typeof window !== 'undefined') {
+      try { sessionStorage.setItem(key, JSON.stringify(entry)); } catch {}
+    }
+  }
+
+  private getCache(url: string): any | null {
+    const key = this.cacheKey(url);
+    const now = Date.now();
+    const mem = this.memoryCache.get(key);
+    if (mem && now - mem.time < this.cacheTTL) return mem.data;
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = sessionStorage.getItem(key);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (now - parsed.time < this.cacheTTL) {
+            this.memoryCache.set(key, parsed);
+            return parsed.data;
+          }
+        }
+      } catch {}
+    }
+    return null;
   }
 
   private getHeaders(): HeadersInit {
@@ -50,12 +85,18 @@ export class GitHubService {
 
   async getFile(path: string): Promise<GitHubFile | null> {
     try {
-      const response = await fetch(`${API_BASE}/contents/${path}`, {
+      const url = `${API_BASE}/contents/${path}`;
+      const cached = this.getCache(url);
+      if (cached) return cached;
+
+      const response = await fetch(url, {
         headers: this.getHeaders(),
       });
 
       if (response.ok) {
-        return await response.json();
+        const json = await response.json();
+        this.setCache(url, json);
+        return json;
       }
       return null;
     } catch (error) {
@@ -66,13 +107,19 @@ export class GitHubService {
 
   async listFiles(path: string = ''): Promise<GitHubFile[]> {
     try {
-      const response = await fetch(`${API_BASE}/contents/${path}`, {
+      const url = `${API_BASE}/contents/${path}`;
+      const cached = this.getCache(url);
+      if (cached) return cached;
+
+      const response = await fetch(url, {
         headers: this.getHeaders(),
       });
 
       if (response.ok) {
         const files = await response.json();
-        return Array.isArray(files) ? files : [files];
+        const arr = Array.isArray(files) ? files : [files];
+        this.setCache(url, arr);
+        return arr;
       }
       return [];
     } catch (error) {
@@ -117,31 +164,18 @@ export class GitHubService {
 
   async getAllPosts(): Promise<GitHubFile[]> {
     const paths = ['notes', 'til', 'daily-journal', 'dev-blog', '100-days-of-code', 'learning-log'];
-    const allFiles: GitHubFile[] = [];
+    // List top-level paths in parallel
+    const lists = await Promise.all(paths.map((p) => this.listFiles(p)));
+    const topFiles = lists.flat();
 
-    for (const path of paths) {
-      const files = await this.listFiles(path);
-      for (const file of files) {
-        if (file.type === 'dir') {
-          const subFiles = await this.listFiles(file.path);
-          // Get full file details for content
-          for (const subFile of subFiles) {
-            if (subFile.name.endsWith('.md') && subFile.name !== 'README.md') {
-              const fullFile = await this.getFile(subFile.path);
-              if (fullFile) {
-                allFiles.push(fullFile);
-              }
-            }
-          }
-        } else if (file.name.endsWith('.md') && file.name !== 'README.md') {
-          // Get full file details for content
-          const fullFile = await this.getFile(file.path);
-          if (fullFile) {
-            allFiles.push(fullFile);
-          }
-        }
-      }
-    }
+    // Recursively list one more level deep in parallel for any directories
+    const subLists = await Promise.all(
+      topFiles.filter(f => f.type === 'dir').map(d => this.listFiles(d.path))
+    );
+
+    const directMarkdown = topFiles.filter(f => f.type !== 'dir' && f.name.endsWith('.md') && f.name !== 'README.md');
+    const nestedMarkdown = subLists.flat().filter(f => f.name.endsWith('.md') && f.name !== 'README.md');
+    const allFiles: GitHubFile[] = [...directMarkdown, ...nestedMarkdown];
 
     return allFiles.sort((a, b) => {
       const dateA = this.extractDateFromPath(a.path);

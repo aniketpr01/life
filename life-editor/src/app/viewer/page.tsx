@@ -102,7 +102,7 @@ export default function ViewerPage() {
       const files = await githubService.getAllPosts();
       const posts = await Promise.all(
         files.map(async (file) => {
-          const content = await fetchFileContent(file.download_url, file);
+          const content = await fetchFileContent(file.sha, file.download_url);
           return fileToPost(file, content);
         })
       );
@@ -120,16 +120,19 @@ export default function ViewerPage() {
     }
   };
 
-  const fetchFileContent = async (url: string, file?: GitHubFile): Promise<string> => {
+  const fetchFileContent = async (sha: string, url: string): Promise<string> => {
     try {
-      // If we have the file object with base64 content, use that first
-      if (file?.content && file?.encoding === 'base64') {
-        return atob(file.content.replace(/\s/g, '')); // Decode base64 and remove whitespace
-      }
-      
-      // Otherwise fetch from download URL
-      const response = await fetch(url);
-      return await response.text();
+      const cacheKey = `post-content:${sha}`;
+      const cached = typeof window !== 'undefined' ? sessionStorage.getItem(cacheKey) : null;
+      if (cached) return cached;
+
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), 15000);
+      const response = await fetch(url, { signal: controller.signal });
+      clearTimeout(id);
+      const text = await response.text();
+      if (typeof window !== 'undefined') { try { sessionStorage.setItem(cacheKey, text); } catch {} }
+      return text;
     } catch (error) {
       console.error('Error fetching file content:', error);
       return '';
