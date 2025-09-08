@@ -29,6 +29,15 @@
 - [ ] Context API
 - [... *[Continue reading →]*
 
+#### 📝 Marlin Signature and Verification
+*Type: Blog | [View Full Entry](dev-blog/2025-09-08-post.md)*
+
+It provides a trustless signing service where signatures are generated inside TEEs using deterministically derived secp256k1 keys. These signatures can be verified on-chain without exposing private keys, ensuring complete transparency and security
+### Core Components
+
+1. **Signing Server** - HTTP service running inside Oyster CVM enclave that signs payloads using KMS-derived secp256k1 keys
+2. **Nautilus KMS Integration** - Local derive server providing deterministic key derivation based on encla... *[Continue reading →]*
+
 ---
 
 ### 📅 Wednesday, January 08, 2025
@@ -109,5 +118,5 @@ Starting this 100 Days of Code challenge feels both exciting and daunting. Today
 ---
 
 
-*Generated on September 08, 2025 at 04:42 AM*
-*Total Entries: 7*
+*Generated on September 08, 2025 at 07:02 AM*
+*Total Entries: 8*
