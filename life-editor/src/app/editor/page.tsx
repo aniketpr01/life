@@ -702,13 +702,6 @@ export default function EditorPage() {
                     <Clock size={14} />
                     <span>CHANGED 24 DAYS AGO</span>
                   </div>
-                  <div className="preview-actions">
-                    <button title="Favorite">🤍</button>
-                    <button title="Save">📁</button>
-                    <button title="Edit">✏️</button>
-                    <button title="Notifications">🔔</button>
-                    <button title="Comments">💬</button>
-                  </div>
                 </div>
                 
               </div>
@@ -1279,23 +1272,6 @@ export default function EditorPage() {
           letter-spacing: 0.5px;
         }
 
-        .preview-actions {
-          display: flex;
-          gap: 8px;
-        }
-
-        .preview-actions button {
-          background: none;
-          border: none;
-          font-size: 16px;
-          cursor: pointer;
-          padding: 4px;
-          border-radius: 3px;
-        }
-
-        .preview-actions button:hover {
-          background: #2d333b;
-        }
 
         .preview-document-title {
           font-size: 32px;
