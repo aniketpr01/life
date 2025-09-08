@@ -22,7 +22,9 @@ class ErrorBoundary extends React.Component<Props, State> {
     // Filter out MetaMask and other extension errors
     if (error.message.includes('MetaMask') || 
         error.message.includes('chrome-extension://') ||
-        error.message.includes('Failed to connect')) {
+        error.message.includes('Failed to connect') ||
+        error.message.includes('allowDangerousHtml') ||
+        error.message.includes('react-markdown')) {
       return { hasError: false };
     }
     
@@ -33,7 +35,9 @@ class ErrorBoundary extends React.Component<Props, State> {
     // Filter out MetaMask and extension errors from logging
     if (error.message.includes('MetaMask') || 
         error.message.includes('chrome-extension://') ||
-        error.message.includes('Failed to connect')) {
+        error.message.includes('Failed to connect') ||
+        error.message.includes('allowDangerousHtml') ||
+        error.message.includes('react-markdown')) {
       return;
     }
     

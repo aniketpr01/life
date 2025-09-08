@@ -617,7 +617,7 @@ export default function ViewerPage() {
               <div className={`dimmed-prose ${state.isFullscreen ? 'fullscreen-prose max-w-4xl mx-auto' : 'max-w-none'}`}>
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm, remarkBreaks]}
-                  rehypePlugins={[rehypeHighlight, rehypeRaw]}
+                  rehypePlugins={[rehypeRaw, rehypeHighlight]}
                   components={{
                     code: ({ node, className, children, ...props }) => {
                       const match = /language-(\w+)/.exec(className || '');

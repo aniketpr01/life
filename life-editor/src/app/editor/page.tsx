@@ -641,9 +641,7 @@ export default function EditorPage() {
               <div className="preview-content-area">
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm, remarkBreaks]}
-                  rehypePlugins={[rehypeHighlight, rehypeRaw]}
-                  skipHtml={false}
-                  allowDangerousHtml={true}
+                  rehypePlugins={[rehypeRaw, rehypeHighlight]}
                   components={{
                     div: ({ className, children, ...props }) => {
                       if (className?.includes('info')) {
