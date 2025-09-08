@@ -341,18 +341,18 @@ export default function ViewerPage() {
   }
 
   return (
-    <div className="page-viewer min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="page-viewer min-h-screen" style={{ background: '#0f343a' }}>
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 shadow-sm">
+      <div className="shadow-sm" style={{ background: '#2d333b', borderBottom: '1px solid #373e47' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-4">
-              <Link href="/" className="flex items-center text-blue-600 hover:text-blue-700">
+              <Link href="/" className="flex items-center hover:text-blue-300" style={{ color: '#4dabf7' }}>
                 <Home className="h-5 w-5 mr-2" />
                 <span className="font-semibold">Life</span>
               </Link>
-              <div className="h-6 w-px bg-gray-300 dark:bg-gray-600"></div>
-              <h1 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center">
+              <div className="h-6 w-px" style={{ background: '#373e47' }}></div>
+              <h1 className="text-xl font-semibold flex items-center" style={{ color: '#cdd9e5' }}>
                 <FileText className="h-5 w-5 mr-2" />
                 Blog Viewer
               </h1>
@@ -362,14 +362,21 @@ export default function ViewerPage() {
               <button
                 onClick={refreshPosts}
                 disabled={state.loading}
-                className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50"
+                className="flex items-center px-3 py-2 text-sm font-medium rounded-md border disabled:opacity-50"
+                style={{ 
+                  background: '#22272e', 
+                  color: '#adbac7', 
+                  borderColor: '#373e47',
+                  ':hover': { background: '#2d333b' }
+                }}
               >
                 <RefreshCw className={`h-4 w-4 mr-2 ${state.loading ? 'animate-spin' : ''}`} />
                 Refresh
               </button>
               <Link
                 href="/editor"
-                className="flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+                className="flex items-center px-4 py-2 text-sm font-medium rounded-md"
+                style={{ background: '#4dabf7', color: 'white' }}
               >
                 <PenTool className="h-4 w-4 mr-2" />
                 Write New
@@ -388,30 +395,35 @@ export default function ViewerPage() {
             { label: "This Month", value: stats.thisMonth, icon: <Clock className="h-5 w-5" /> },
             { label: "Categories", value: stats.categories, icon: <Tag className="h-5 w-5" /> }
           ].map((stat, index) => (
-            <div key={index} className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+            <div key={index} className="p-6 rounded-lg shadow-sm border" style={{ background: '#22272e', borderColor: '#373e47' }}>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{stat.value}</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">{stat.label}</p>
+                  <p className="text-2xl font-bold" style={{ color: '#cdd9e5' }}>{stat.value}</p>
+                  <p className="text-sm" style={{ color: '#768390' }}>{stat.label}</p>
                 </div>
-                <div className="text-blue-500">{stat.icon}</div>
+                <div style={{ color: '#4dabf7' }}>{stat.icon}</div>
               </div>
             </div>
           ))}
         </div>
 
         {/* Filters */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-8">
+        <div className="p-6 rounded-lg shadow-sm border mb-8" style={{ background: '#22272e', borderColor: '#373e47' }}>
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4" style={{ color: '#768390' }} />
                 <input
                   type="text"
                   value={state.searchTerm}
                   onChange={(e) => setState(prev => ({ ...prev, searchTerm: e.target.value }))}
                   placeholder="Search posts..."
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full pl-10 pr-4 py-2 border rounded-md"
+                  style={{ 
+                    background: '#2d333b', 
+                    borderColor: '#444c56', 
+                    color: '#adbac7' 
+                  }}
                 />
               </div>
             </div>
@@ -419,7 +431,12 @@ export default function ViewerPage() {
             <select
               value={state.selectedType}
               onChange={(e) => setState(prev => ({ ...prev, selectedType: e.target.value }))}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className="px-4 py-2 border rounded-md"
+              style={{ 
+                background: '#2d333b', 
+                borderColor: '#444c56', 
+                color: '#adbac7' 
+              }}
             >
               <option value="all">All Types</option>
               <option value="plain">Plain Notes</option>
@@ -433,7 +450,12 @@ export default function ViewerPage() {
             <select
               value={state.sortBy}
               onChange={(e) => setState(prev => ({ ...prev, sortBy: e.target.value }))}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className="px-4 py-2 border rounded-md"
+              style={{ 
+                background: '#2d333b', 
+                borderColor: '#444c56', 
+                color: '#adbac7' 
+              }}
             >
               <option value="newest">Newest First</option>
               <option value="oldest">Oldest First</option>
@@ -473,23 +495,24 @@ export default function ViewerPage() {
                 <div
                   key={`${post.id}-${index}-${post.path}`}
                   onClick={() => openPost(post)}
-                  className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow cursor-pointer overflow-hidden"
+                  className="rounded-lg shadow-sm border hover:shadow-md transition-shadow cursor-pointer overflow-hidden"
+                  style={{ background: '#22272e', borderColor: '#373e47' }}
                 >
                   <div className="p-6">
                     <div className="flex items-center justify-between mb-3">
                       <span className={`px-2 py-1 text-xs font-medium rounded-full ${getPostTypeColor(post.type)}`}>
                         {getPostTypeLabel(post.type)}
                       </span>
-                      <span className="text-sm text-gray-500 dark:text-gray-400">
+                      <span className="text-sm" style={{ color: '#768390' }}>
                         {formatDistanceToNow(parseISO(post.createdAt), { addSuffix: true })}
                       </span>
                     </div>
                     
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2">
+                    <h3 className="text-lg font-semibold mb-2 line-clamp-2" style={{ color: '#cdd9e5' }}>
                       {post.title}
                     </h3>
                     
-                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-3">
+                    <p className="text-sm mb-4 line-clamp-3" style={{ color: '#adbac7' }}>
                       {post.content.replace(/[#*`]/g, '').substring(0, 120)}...
                     </p>
                     
@@ -499,18 +522,18 @@ export default function ViewerPage() {
                           .filter(tag => tag && tag.length > 2 && /^[a-zA-Z]/.test(tag))
                           .slice(0, 2)
                           .map((tag) => (
-                          <span key={tag} className="text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded">
+                          <span key={tag} className="text-xs px-2 py-1 rounded" style={{ background: 'rgba(77, 171, 247, 0.2)', color: '#74c0fc' }}>
                             #{tag}
                           </span>
                         ))}
                         {post.tags.filter(tag => tag && tag.length > 2 && /^[a-zA-Z]/.test(tag)).length > 2 && (
-                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                          <span className="text-xs" style={{ color: '#768390' }}>
                             +{post.tags.filter(tag => tag && tag.length > 2 && /^[a-zA-Z]/.test(tag)).length - 2} more
                           </span>
                         )}
                       </div>
                       
-                      <button className="flex items-center text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">
+                      <button className="flex items-center text-sm hover:text-blue-300 transition-colors" style={{ color: '#4dabf7' }}>
                         <Eye className="h-4 w-4 mr-1" />
                         Read
                       </button>
@@ -526,20 +549,22 @@ export default function ViewerPage() {
                 <button
                   onClick={() => setState(prev => ({ ...prev, currentPage: Math.max(1, prev.currentPage - 1) }))}
                   disabled={state.currentPage === 1}
-                  className="flex items-center px-3 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center px-3 py-2 text-sm font-medium border rounded-md hover:bg-opacity-80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  style={{ background: '#22272e', color: '#adbac7', borderColor: '#373e47' }}
                 >
                   <ChevronLeft className="h-4 w-4 mr-1" />
                   Previous
                 </button>
                 
-                <span className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300">
+                <span className="px-4 py-2 text-sm" style={{ color: '#adbac7' }}>
                   Page {state.currentPage} of {totalPages}
                 </span>
                 
                 <button
                   onClick={() => setState(prev => ({ ...prev, currentPage: Math.min(totalPages, prev.currentPage + 1) }))}
                   disabled={state.currentPage === totalPages}
-                  className="flex items-center px-3 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center px-3 py-2 text-sm font-medium border rounded-md hover:bg-opacity-80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  style={{ background: '#22272e', color: '#adbac7', borderColor: '#373e47' }}
                 >
                   Next
                   <ChevronRight className="h-4 w-4 ml-1" />
