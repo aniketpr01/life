@@ -1,0 +1,8 @@
+Todays Tasks
+
+Benchmarking TEE with new instance
+Arweave testing
+
+Analyze:
+- App-level authentication mechanism for that whitelisting access to coprocessor, and how it can be hacked with session, also check sdk to coprocessor if that can be added there
+- Migrate current DB to S3 buckets and test it
