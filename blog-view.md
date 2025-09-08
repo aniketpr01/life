@@ -38,6 +38,19 @@ It provides a trustless signing service where signatures are generated inside TE
 - [ ] Context API
 - [... *[Continue reading →]*
 
+#### 📝 Test Blog Post
+*Type: Blog | [View Full Entry](dev-blog/2025-09-08-test-workflow.md)*
+
+This is a test blog post created to verify the editor → GitHub → viewer workflow.
+
+## Features Being Tested
+
+- **GitHub Push**: Does this post get pushed to the repository?
+- **Viewer Display**: Can the viewer fetch and display this post?
+- **Mermaid Support**: Do diagrams render properly?
+
+*[Code example included in full entry...]*
+
 #### 📝 Marlin Signature and Verification
 *Type: Blog | [View Full Entry](dev-blog/2025-09-08-post.md)*
 
@@ -127,5 +140,5 @@ Starting this 100 Days of Code challenge feels both exciting and daunting. Today
 ---
 
 
-*Generated on September 08, 2025 at 07:12 AM*
-*Total Entries: 9*
+*Generated on September 08, 2025 at 07:14 AM*
+*Total Entries: 10*
