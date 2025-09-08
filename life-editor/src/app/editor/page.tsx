@@ -335,14 +335,13 @@ export default function EditorPage() {
         // This is a daily file - ALWAYS APPEND, never overwrite
         const now = new Date();
         
-        // Convert to IST (UTC+5:30)
-        const istTime = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
-        const currentTimeIST = istTime.toLocaleTimeString('en-US', { 
-          hour12: true, 
-          hour: 'numeric', 
+        // Convert to IST using proper timezone
+        const currentTimeIST = new Intl.DateTimeFormat('en-US', {
+          timeZone: 'Asia/Kolkata',
+          hour: 'numeric',
           minute: '2-digit',
-          timeZone: 'Asia/Kolkata'
-        });
+          hour12: true
+        }).format(now);
         
         const existingContent = atob(existingFile.content.replace(/\s/g, '') || '');
         
@@ -606,12 +605,12 @@ export default function EditorPage() {
             <span className="filename-display">📁 {filename}</span>
             {!title.trim() && (
               <span className="daily-indicator">
-                📅 Daily Entry - Will append to today's file at {new Date().toLocaleTimeString('en-US', { 
-                  hour12: true, 
-                  hour: 'numeric', 
+                📅 Daily Entry - Will append to today's file at {new Intl.DateTimeFormat('en-US', {
+                  timeZone: 'Asia/Kolkata',
+                  hour: 'numeric',
                   minute: '2-digit',
-                  timeZone: 'Asia/Kolkata'
-                })} IST
+                  hour12: true
+                }).format(new Date())} IST
               </span>
             )}
             {saveStatus === 'saved' && <span className="save-indicator saved">✅ Saved!</span>}
