@@ -124,9 +124,21 @@ export class GitHubService {
       for (const file of files) {
         if (file.type === 'dir') {
           const subFiles = await this.listFiles(file.path);
-          allFiles.push(...subFiles.filter(f => f.name.endsWith('.md') && f.name !== 'README.md'));
+          // Get full file details for content
+          for (const subFile of subFiles) {
+            if (subFile.name.endsWith('.md') && subFile.name !== 'README.md') {
+              const fullFile = await this.getFile(subFile.path);
+              if (fullFile) {
+                allFiles.push(fullFile);
+              }
+            }
+          }
         } else if (file.name.endsWith('.md') && file.name !== 'README.md') {
-          allFiles.push(file);
+          // Get full file details for content
+          const fullFile = await this.getFile(file.path);
+          if (fullFile) {
+            allFiles.push(fullFile);
+          }
         }
       }
     }
@@ -134,15 +146,16 @@ export class GitHubService {
     return allFiles.sort((a, b) => {
       const dateA = this.extractDateFromPath(a.path);
       const dateB = this.extractDateFromPath(b.path);
-      return dateB.getTime() - dateA.getTime();
+      return dateB.getTime() - dateA.getTime(); // Newest first
     });
   }
 
   private extractDateFromPath(path: string): Date {
     // Extract date from various path formats
     const patterns = [
-      /(\d{4})[/-](\d{2})[/-](\d{2})/,
-      /day-(\d{3})/,
+      /(\d{4})[/-](\d{2})[/-](\d{2})/,  // YYYY-MM-DD or YYYY/MM/DD
+      /(\d{2})(\d{2})(\d{2})/,          // DDMMYY (like 080925 = 08/09/25)
+      /day-(\d{3})/,                     // day-001 format
     ];
 
     for (const pattern of patterns) {
@@ -153,12 +166,19 @@ export class GitHubService {
           const baseDate = new Date('2025-01-08');
           baseDate.setDate(baseDate.getDate() + dayNum - 1);
           return baseDate;
+        } else if (pattern.source.includes('(\\d{2})(\\d{2})(\\d{2})')) {
+          // Handle DDMMYY format like 080925
+          const day = parseInt(match[1]);
+          const month = parseInt(match[2]);
+          const year = parseInt('20' + match[3]); // Assume 20xx
+          return new Date(year, month - 1, day); // month is 0-indexed
         } else {
           return new Date(`${match[1]}-${match[2]}-${match[3]}`);
         }
       }
     }
 
+    // Fallback to current date
     return new Date();
   }
 

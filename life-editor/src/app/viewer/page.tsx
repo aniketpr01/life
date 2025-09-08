@@ -102,7 +102,7 @@ export default function ViewerPage() {
       const files = await githubService.getAllPosts();
       const posts = await Promise.all(
         files.map(async (file) => {
-          const content = await fetchFileContent(file.download_url);
+          const content = await fetchFileContent(file.download_url, file);
           return fileToPost(file, content);
         })
       );
@@ -120,8 +120,14 @@ export default function ViewerPage() {
     }
   };
 
-  const fetchFileContent = async (url: string): Promise<string> => {
+  const fetchFileContent = async (url: string, file?: GitHubFile): Promise<string> => {
     try {
+      // If we have the file object with base64 content, use that first
+      if (file?.content && file?.encoding === 'base64') {
+        return atob(file.content.replace(/\s/g, '')); // Decode base64 and remove whitespace
+      }
+      
+      // Otherwise fetch from download URL
       const response = await fetch(url);
       return await response.text();
     } catch (error) {
@@ -133,7 +139,7 @@ export default function ViewerPage() {
   const fileToPost = (file: GitHubFile, content: string): BlogPost | null => {
     if (!file.name.endsWith('.md') || file.name === 'README.md') return null;
 
-    const title = extractTitleFromContent(content) || file.name.replace('.md', '').replace(/-/g, ' ');
+    const title = extractTitleFromContent(content, file.name);
     const type = getPostTypeFromPath(file.path);
     const category = getCategoryFromPath(file.path);
     const tags = extractTagsFromContent(content);
@@ -153,14 +159,26 @@ export default function ViewerPage() {
     };
   };
 
-  const extractTitleFromContent = (content: string): string | null => {
-    const lines = content.split('\n');
+  const extractTitleFromContent = (content: string, filename: string): string => {
+    const lines = content.split('\n').filter(line => line.trim());
+    
+    // First try to find a markdown header
     for (const line of lines) {
       if (line.startsWith('# ')) {
         return line.substring(2).trim();
       }
     }
-    return null;
+    
+    // If no header found, use first non-empty line as title
+    if (lines.length > 0) {
+      const firstLine = lines[0].trim();
+      if (firstLine && firstLine.length < 100) {
+        return firstLine;
+      }
+    }
+    
+    // Fallback to filename
+    return filename.replace('.md', '').replace(/-/g, ' ').replace(/^\d+/, '').trim() || 'Untitled';
   };
 
   const getPostTypeFromPath = (path: string): BlogPost['type'] => {
@@ -206,8 +224,9 @@ export default function ViewerPage() {
 
   const extractDateFromPath = (path: string): Date => {
     const patterns = [
-      /(\d{4})[/-](\d{2})[/-](\d{2})/,
-      /day-(\d{3})/,
+      /(\d{4})[/-](\d{2})[/-](\d{2})/,  // YYYY-MM-DD or YYYY/MM/DD
+      /(\d{2})(\d{2})(\d{2})/,          // DDMMYY (like 080925 = 08/09/25)
+      /day-(\d{3})/,                     // day-001 format
     ];
 
     for (const pattern of patterns) {
@@ -218,12 +237,19 @@ export default function ViewerPage() {
           const baseDate = new Date('2025-01-08');
           baseDate.setDate(baseDate.getDate() + dayNum - 1);
           return baseDate;
+        } else if (pattern.source.includes('(\\d{2})(\\d{2})(\\d{2})')) {
+          // Handle DDMMYY format like 080925
+          const day = parseInt(match[1]);
+          const month = parseInt(match[2]);
+          const year = parseInt('20' + match[3]); // Assume 20xx
+          return new Date(year, month - 1, day); // month is 0-indexed
         } else {
           return new Date(`${match[1]}-${match[2]}-${match[3]}`);
         }
       }
     }
 
+    // Fallback to current date
     return new Date();
   };
 
@@ -249,10 +275,18 @@ export default function ViewerPage() {
     // Sort posts
     switch (state.sortBy) {
       case 'newest':
-        filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        filtered.sort((a, b) => {
+          const dateA = new Date(a.createdAt);
+          const dateB = new Date(b.createdAt);
+          return dateB.getTime() - dateA.getTime();
+        });
         break;
       case 'oldest':
-        filtered.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+        filtered.sort((a, b) => {
+          const dateA = new Date(a.createdAt);
+          const dateB = new Date(b.createdAt);
+          return dateA.getTime() - dateB.getTime();
+        });
         break;
       case 'title':
         filtered.sort((a, b) => a.title.localeCompare(b.title));
