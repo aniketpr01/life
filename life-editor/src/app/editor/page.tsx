@@ -664,45 +664,157 @@ export default function EditorPage() {
                       }
                       
                       return (
-                        <code className={className} {...props} style={{ color: '#f0f6fc' }}>
+                        <code className={className} {...props} style={{ color: '#f0f6fc', background: '#2d333b', padding: '2px 4px', borderRadius: '3px' }}>
                           {children}
                         </code>
                       );
                     },
+                    pre: ({ children, ...props }) => (
+                      <pre {...props} style={{ 
+                        background: '#2d333b', 
+                        color: '#e6edf3', 
+                        padding: '16px', 
+                        borderRadius: '6px',
+                        border: '1px solid #444c56',
+                        overflow: 'auto'
+                      }}>
+                        {children}
+                      </pre>
+                    ),
                     p: ({ children, ...props }) => (
-                      <p {...props} style={{ color: '#e6edf3' }}>
+                      <p {...props} style={{ color: '#e6edf3', marginBottom: '16px' }}>
                         {children}
                       </p>
                     ),
                     h1: ({ children, ...props }) => (
-                      <h1 {...props} style={{ color: '#f0f6fc' }}>
+                      <h1 {...props} style={{ 
+                        color: '#f0f6fc', 
+                        fontSize: '2rem', 
+                        fontWeight: '600',
+                        marginBottom: '16px',
+                        borderBottom: '1px solid #373e47',
+                        paddingBottom: '8px'
+                      }}>
                         {children}
                       </h1>
                     ),
                     h2: ({ children, ...props }) => (
-                      <h2 {...props} style={{ color: '#f0f6fc' }}>
+                      <h2 {...props} style={{ 
+                        color: '#f0f6fc', 
+                        fontSize: '1.5rem', 
+                        fontWeight: '600',
+                        marginBottom: '12px',
+                        marginTop: '24px'
+                      }}>
                         {children}
                       </h2>
                     ),
                     h3: ({ children, ...props }) => (
-                      <h3 {...props} style={{ color: '#f0f6fc' }}>
+                      <h3 {...props} style={{ 
+                        color: '#f0f6fc', 
+                        fontSize: '1.25rem', 
+                        fontWeight: '600',
+                        marginBottom: '8px',
+                        marginTop: '20px'
+                      }}>
                         {children}
                       </h3>
                     ),
+                    ul: ({ children, ...props }) => (
+                      <ul {...props} style={{ 
+                        color: '#e6edf3', 
+                        paddingLeft: '24px', 
+                        marginBottom: '16px',
+                        listStyleType: 'disc'
+                      }}>
+                        {children}
+                      </ul>
+                    ),
+                    ol: ({ children, ...props }) => (
+                      <ol {...props} style={{ 
+                        color: '#e6edf3', 
+                        paddingLeft: '24px', 
+                        marginBottom: '16px',
+                        listStyleType: 'decimal'
+                      }}>
+                        {children}
+                      </ol>
+                    ),
                     li: ({ children, ...props }) => (
-                      <li {...props} style={{ color: '#e6edf3' }}>
+                      <li {...props} style={{ 
+                        color: '#e6edf3', 
+                        marginBottom: '4px',
+                        lineHeight: '1.6'
+                      }}>
                         {children}
                       </li>
                     ),
                     strong: ({ children, ...props }) => (
-                      <strong {...props} style={{ color: '#f0f6fc' }}>
+                      <strong {...props} style={{ color: '#f0f6fc', fontWeight: '600' }}>
                         {children}
                       </strong>
                     ),
                     em: ({ children, ...props }) => (
-                      <em {...props} style={{ color: '#e6edf3' }}>
+                      <em {...props} style={{ color: '#e6edf3', fontStyle: 'italic' }}>
                         {children}
                       </em>
+                    ),
+                    blockquote: ({ children, ...props }) => (
+                      <blockquote {...props} style={{ 
+                        color: '#768390', 
+                        borderLeft: '4px solid #4dabf7',
+                        paddingLeft: '16px',
+                        margin: '16px 0',
+                        fontStyle: 'italic'
+                      }}>
+                        {children}
+                      </blockquote>
+                    ),
+                    a: ({ children, ...props }) => (
+                      <a {...props} style={{ 
+                        color: '#58a6ff',
+                        textDecoration: 'none'
+                      }}>
+                        {children}
+                      </a>
+                    ),
+                    table: ({ children, ...props }) => (
+                      <table {...props} style={{ 
+                        width: '100%',
+                        borderCollapse: 'collapse',
+                        margin: '16px 0',
+                        background: '#22272e',
+                        border: '1px solid #373e47'
+                      }}>
+                        {children}
+                      </table>
+                    ),
+                    th: ({ children, ...props }) => (
+                      <th {...props} style={{ 
+                        background: '#2d333b',
+                        color: '#cdd9e5',
+                        border: '1px solid #373e47',
+                        padding: '8px 12px',
+                        textAlign: 'left'
+                      }}>
+                        {children}
+                      </th>
+                    ),
+                    td: ({ children, ...props }) => (
+                      <td {...props} style={{ 
+                        color: '#adbac7',
+                        border: '1px solid #373e47',
+                        padding: '8px 12px'
+                      }}>
+                        {children}
+                      </td>
+                    ),
+                    hr: ({ ...props }) => (
+                      <hr {...props} style={{ 
+                        border: 'none',
+                        borderTop: '1px solid #373e47',
+                        margin: '24px 0'
+                      }} />
                     )
                   }}
                 >
@@ -1138,16 +1250,31 @@ export default function EditorPage() {
           color: #e6edf3 !important;
         }
 
-        .preview-content-area ul, .preview-content-area ol {
+        .preview-content-area ul {
           margin: 16px 0;
           padding-left: 32px;
           color: #e6edf3 !important;
+          list-style-type: disc !important;
+          list-style-position: outside !important;
+        }
+
+        .preview-content-area ol {
+          margin: 16px 0;
+          padding-left: 32px;
+          color: #e6edf3 !important;
+          list-style-type: decimal !important;
+          list-style-position: outside !important;
         }
 
         .preview-content-area li {
           margin: 4px 0;
           line-height: 1.6;
           color: #e6edf3 !important;
+          display: list-item !important;
+        }
+
+        .preview-content-area li::marker {
+          color: #4dabf7 !important;
         }
 
         .preview-content-area code {
