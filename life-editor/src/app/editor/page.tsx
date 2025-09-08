@@ -194,7 +194,10 @@ export default function EditorPage() {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [filename, setFilename] = useState('');
   const [postType, setPostType] = useState<BlogPost['type']>('plain');
-  const [category, setCategory] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [searchCache, setSearchCache] = useState<Map<string, any[]>>(new Map());
   const [title, setTitle] = useState('');
   const [cursorPosition, setCursorPosition] = useState({ line: 1, column: 1 });
   const [showTemplates, setShowTemplates] = useState(false);
@@ -262,7 +265,7 @@ export default function EditorPage() {
         path = `notes/${cleanTitle || todayFormat}.md`;
         break;
       case 'til':
-        path = `til/${category || 'general'}/${cleanTitle || todayFormat}.md`;
+        path = `til/general/${cleanTitle || todayFormat}.md`;
         break;
       case 'journal':
         path = `daily-journal/${isoDate.substring(0, 4)}/${isoDate.substring(5, 7)}/${isoDate.substring(8)}-${cleanTitle || 'entry'}.md`;
@@ -280,7 +283,7 @@ export default function EditorPage() {
     }
     
     setFilename(path);
-  }, [postType, category, title]);
+  }, [postType, title]);
 
   useEffect(() => {
     generateFilename();
@@ -435,6 +438,99 @@ export default function EditorPage() {
     setTimeout(() => setSaveStatus('idle'), 3000);
   };
 
+  // Fuzzy search functionality
+  const performSearch = useCallback(async (query: string) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      setShowSearchResults(false);
+      return;
+    }
+
+    // Check cache first
+    if (searchCache.has(query.toLowerCase())) {
+      const cachedResults = searchCache.get(query.toLowerCase()) || [];
+      setSearchResults(cachedResults);
+      setShowSearchResults(true);
+      return;
+    }
+
+    try {
+      const files = await githubService.current.getAllPosts();
+      const results = [];
+
+      for (const file of files) {
+        const content = file.content ? atob(file.content.replace(/\s/g, '')) : '';
+        const lowerQuery = query.toLowerCase();
+        
+        // Search in filename, content, and path
+        const filenameMatch = file.name.toLowerCase().includes(lowerQuery);
+        const contentMatch = content.toLowerCase().includes(lowerQuery);
+        const pathMatch = file.path.toLowerCase().includes(lowerQuery);
+        
+        if (filenameMatch || contentMatch || pathMatch) {
+          // Extract snippet around match
+          const contentLines = content.split('\n');
+          let snippet = '';
+          let matchLine = '';
+          
+          for (const line of contentLines) {
+            if (line.toLowerCase().includes(lowerQuery)) {
+              matchLine = line;
+              break;
+            }
+          }
+          
+          if (matchLine) {
+            const index = matchLine.toLowerCase().indexOf(lowerQuery);
+            const start = Math.max(0, index - 50);
+            const end = Math.min(matchLine.length, index + 100);
+            snippet = matchLine.substring(start, end);
+            if (start > 0) snippet = '...' + snippet;
+            if (end < matchLine.length) snippet = snippet + '...';
+          }
+
+          results.push({
+            file,
+            snippet: snippet || content.substring(0, 100) + '...',
+            matchType: filenameMatch ? 'filename' : contentMatch ? 'content' : 'path',
+            title: content.split('\n').find(line => line.startsWith('#'))?.replace(/^#+\s*/, '') || 
+                   file.name.replace('.md', '').replace(/-/g, ' ')
+          });
+        }
+      }
+
+      // Sort by relevance (filename matches first, then content)
+      results.sort((a, b) => {
+        if (a.matchType === 'filename' && b.matchType !== 'filename') return -1;
+        if (b.matchType === 'filename' && a.matchType !== 'filename') return 1;
+        return 0;
+      });
+
+      // Cache the results
+      const newCache = new Map(searchCache);
+      newCache.set(query.toLowerCase(), results);
+      setSearchCache(newCache);
+
+      setSearchResults(results);
+      setShowSearchResults(true);
+    } catch (error) {
+      console.error('Search error:', error);
+    }
+  }, [searchCache]);
+
+  // Debounced search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchQuery) {
+        performSearch(searchQuery);
+      } else {
+        setShowSearchResults(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, performSearch]);
+
   const insertMarkdown = (before: string, after: string = before, placeholder?: string) => {
     const textarea = textareaRef.current;
     if (!textarea) return;
@@ -576,13 +672,60 @@ export default function EditorPage() {
             📝 Templates
           </button>
           
-          <input
-            type="text"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            placeholder="Category"
-            className="category-input"
-          />
+          <div className="search-container">
+            <div className="search-input-wrapper">
+              <Search size={14} className="search-icon" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search all posts..."
+                className="search-input"
+                onFocus={() => searchQuery && setShowSearchResults(true)}
+              />
+              {searchQuery && (
+                <button 
+                  onClick={() => {
+                    setSearchQuery('');
+                    setShowSearchResults(false);
+                  }}
+                  className="search-clear"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+            
+            {/* Search Results Dropdown */}
+            {showSearchResults && searchResults.length > 0 && (
+              <div className="search-results">
+                {searchResults.slice(0, 8).map((result, index) => (
+                  <div 
+                    key={index}
+                    className="search-result-item"
+                    onClick={() => {
+                      const editUrl = `/editor?edit=${encodeURIComponent(result.file.path)}&title=${encodeURIComponent(result.title)}`;
+                      window.location.href = editUrl;
+                    }}
+                  >
+                    <div className="result-title">{result.title}</div>
+                    <div className="result-path">{result.file.path}</div>
+                    <div className="result-snippet" dangerouslySetInnerHTML={{
+                      __html: result.snippet.replace(
+                        new RegExp(`(${searchQuery})`, 'gi'),
+                        '<mark>$1</mark>'
+                      )
+                    }} />
+                  </div>
+                ))}
+                {searchResults.length > 8 && (
+                  <div className="search-more">
+                    +{searchResults.length - 8} more results
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
           
           <input
             type="text"
@@ -948,7 +1091,124 @@ export default function EditorPage() {
           color: white;
         }
 
-        .template-select, .category-input, .title-input {
+        /* Search Container */
+        .search-container {
+          position: relative;
+          flex: 1;
+          max-width: 300px;
+        }
+
+        .search-input-wrapper {
+          position: relative;
+          display: flex;
+          align-items: center;
+        }
+
+        .search-icon {
+          position: absolute;
+          left: 8px;
+          color: #768390;
+          pointer-events: none;
+        }
+
+        .search-input {
+          width: 100%;
+          padding: 4px 8px 4px 28px;
+          border: 1px solid #444c56;
+          border-radius: 4px;
+          background: #22272e;
+          color: #adbac7;
+          font-size: 13px;
+          outline: none;
+        }
+
+        .search-input:focus {
+          border-color: #4dabf7;
+          box-shadow: 0 0 0 2px rgba(77, 171, 247, 0.1);
+        }
+
+        .search-clear {
+          position: absolute;
+          right: 6px;
+          background: none;
+          border: none;
+          color: #768390;
+          cursor: pointer;
+          font-size: 12px;
+          padding: 2px;
+        }
+
+        .search-clear:hover {
+          color: #adbac7;
+        }
+
+        /* Search Results Dropdown */
+        .search-results {
+          position: absolute;
+          top: 100%;
+          left: 0;
+          right: 0;
+          background: #22272e;
+          border: 1px solid #373e47;
+          border-radius: 6px;
+          box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+          max-height: 400px;
+          overflow-y: auto;
+          z-index: 1000;
+          margin-top: 4px;
+        }
+
+        .search-result-item {
+          padding: 12px;
+          border-bottom: 1px solid #373e47;
+          cursor: pointer;
+          transition: background 0.2s ease;
+        }
+
+        .search-result-item:hover {
+          background: #2d333b;
+        }
+
+        .search-result-item:last-child {
+          border-bottom: none;
+        }
+
+        .result-title {
+          font-weight: 600;
+          color: #cdd9e5;
+          font-size: 14px;
+          margin-bottom: 4px;
+        }
+
+        .result-path {
+          font-size: 12px;
+          color: #768390;
+          font-family: monospace;
+          margin-bottom: 6px;
+        }
+
+        .result-snippet {
+          font-size: 13px;
+          color: #adbac7;
+          line-height: 1.4;
+        }
+
+        .result-snippet mark {
+          background: #ffd60a;
+          color: #1c1f24;
+          padding: 1px 2px;
+          border-radius: 2px;
+        }
+
+        .search-more {
+          padding: 8px 12px;
+          color: #768390;
+          font-size: 12px;
+          text-align: center;
+          border-top: 1px solid #373e47;
+        }
+
+        .template-select, .title-input {
           padding: 4px 8px;
           border: 1px solid #444c56;
           border-radius: 3px;
