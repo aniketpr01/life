@@ -20,7 +20,10 @@ export default function ClientErrorHandler() {
         return;
       }
       
-      originalError.apply(console, args);
+      // Don't log if it's about the ClientErrorHandler itself
+      if (!message.includes('ClientErrorHandler') && !message.includes('Encountered two children')) {
+        originalError.apply(console, args);
+      }
     };
     
     console.warn = (...args) => {

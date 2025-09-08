@@ -2,25 +2,7 @@
 
 import { useState, useEffect } from 'react';
 
-// Suppress MetaMask errors immediately
-if (typeof window !== 'undefined') {
-  const originalError = window.console.error;
-  window.console.error = (...args) => {
-    const message = args[0]?.toString() || '';
-    if (message.includes('MetaMask') || message.includes('chrome-extension://')) {
-      return;
-    }
-    originalError.apply(console, args);
-  };
-
-  window.addEventListener('unhandledrejection', (event) => {
-    const reason = event.reason?.message || event.reason || '';
-    if (typeof reason === 'string' && (reason.includes('MetaMask') || reason.includes('chrome-extension://'))) {
-      event.preventDefault();
-      return false;
-    }
-  });
-}
+// Error suppression handled by global components
 import { 
   Search, 
   Filter, 
@@ -185,9 +167,12 @@ export default function ViewerPage() {
   };
 
   const extractTagsFromContent = (content: string): string[] => {
-    const tagRegex = /#[\w-]+/g;
+    const tagRegex = /#[a-zA-Z][\w-]+/g; // Only tags that start with a letter
     const matches = content.match(tagRegex) || [];
-    return matches.map(tag => tag.substring(1));
+    return matches
+      .map(tag => tag.substring(1))
+      .filter(tag => tag.length > 2 && /^[a-zA-Z]/.test(tag)) // Filter out short/invalid tags
+      .slice(0, 5); // Limit to 5 tags max
   };
 
   const extractDateFromPath = (path: string): Date => {
@@ -435,9 +420,9 @@ export default function ViewerPage() {
         {!state.loading && state.filteredPosts.length > 0 && (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-              {getPaginatedPosts().map((post) => (
+              {getPaginatedPosts().map((post, index) => (
                 <div
-                  key={post.id}
+                  key={`${post.id}-${index}-${post.path}`}
                   onClick={() => openPost(post)}
                   className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow cursor-pointer overflow-hidden"
                 >
@@ -461,14 +446,17 @@ export default function ViewerPage() {
                     
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
-                        {post.tags.slice(0, 2).map((tag) => (
+                        {post.tags
+                          .filter(tag => tag && tag.length > 2 && /^[a-zA-Z]/.test(tag))
+                          .slice(0, 2)
+                          .map((tag) => (
                           <span key={tag} className="text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded">
                             #{tag}
                           </span>
                         ))}
-                        {post.tags.length > 2 && (
+                        {post.tags.filter(tag => tag && tag.length > 2 && /^[a-zA-Z]/.test(tag)).length > 2 && (
                           <span className="text-xs text-gray-500 dark:text-gray-400">
-                            +{post.tags.length - 2} more
+                            +{post.tags.filter(tag => tag && tag.length > 2 && /^[a-zA-Z]/.test(tag)).length - 2} more
                           </span>
                         )}
                       </div>
@@ -565,7 +553,10 @@ export default function ViewerPage() {
               </div>
               
               <div className="flex items-center space-x-2">
-                {state.selectedPost.tags.map((tag) => (
+                {state.selectedPost.tags
+                  .filter(tag => tag && tag.length > 2 && /^[a-zA-Z]/.test(tag))
+                  .slice(0, 5)
+                  .map((tag) => (
                   <span key={tag} className="text-xs text-blue-300 bg-blue-900/20 px-2 py-1 rounded">
                     #{tag}
                   </span>
