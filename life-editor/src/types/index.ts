@@ -2,7 +2,7 @@ export interface BlogPost {
   id: string;
   title: string;
   content: string;
-  type: 'til' | 'journal' | 'blog' | '100days' | 'learning';
+  type: 'plain' | 'til' | 'journal' | 'blog' | '100days' | 'learning';
   category: string;
   tags: string[];
   createdAt: string;

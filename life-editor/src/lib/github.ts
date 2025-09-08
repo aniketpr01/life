@@ -116,7 +116,7 @@ export class GitHubService {
   }
 
   async getAllPosts(): Promise<GitHubFile[]> {
-    const paths = ['til', 'daily-journal', 'dev-blog', '100-days-of-code', 'learning-log'];
+    const paths = ['notes', 'til', 'daily-journal', 'dev-blog', '100-days-of-code', 'learning-log'];
     const allFiles: GitHubFile[] = [];
 
     for (const path of paths) {

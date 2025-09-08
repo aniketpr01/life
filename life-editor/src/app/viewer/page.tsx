@@ -167,7 +167,8 @@ export default function ViewerPage() {
     if (path.includes('dev-blog')) return 'blog';
     if (path.includes('100-days')) return '100days';
     if (path.includes('learning-log')) return 'learning';
-    return 'til';
+    if (path.includes('notes')) return 'plain';
+    return 'plain';
   };
 
   const getCategoryFromPath = (path: string): string => {
@@ -290,6 +291,7 @@ export default function ViewerPage() {
 
   const getPostTypeLabel = (type: BlogPost['type']) => {
     const labels = {
+      plain: 'Note',
       til: 'TIL',
       journal: 'Journal',
       blog: 'Blog',
@@ -301,6 +303,7 @@ export default function ViewerPage() {
 
   const getPostTypeColor = (type: BlogPost['type']) => {
     const colors = {
+      plain: 'bg-gray-900/20 text-gray-300',
       til: 'bg-blue-900/20 text-blue-300',
       journal: 'bg-green-900/20 text-green-300',
       blog: 'bg-purple-900/20 text-purple-300',
@@ -413,6 +416,7 @@ export default function ViewerPage() {
               className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
               <option value="all">All Types</option>
+              <option value="plain">Plain Notes</option>
               <option value="til">TIL</option>
               <option value="journal">Journal</option>
               <option value="blog">Blog</option>

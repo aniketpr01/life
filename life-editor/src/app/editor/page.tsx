@@ -21,6 +21,7 @@ import MermaidDiagram from '@/components/MermaidDiagram';
 import SyntaxHighlightedEditor from '@/components/SyntaxHighlightedEditor';
 
 const templates = {
+  plain: '', // Empty plain format
   til: `# What I Learned Today
 
 Brief description of your discovery or learning...
@@ -192,7 +193,7 @@ export default function EditorPage() {
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [filename, setFilename] = useState('');
-  const [postType, setPostType] = useState<BlogPost['type']>('til');
+  const [postType, setPostType] = useState<BlogPost['type']>('plain');
   const [category, setCategory] = useState('');
   const [title, setTitle] = useState('');
   const [cursorPosition, setCursorPosition] = useState({ line: 1, column: 1 });
@@ -205,10 +206,8 @@ export default function EditorPage() {
     const savedContent = localStorage.getItem('hackmd-content');
     if (savedContent) {
       setContent(savedContent);
-    } else {
-      // Load default TIL template on first visit
-      setContent(templates.til);
     }
+    // Start with blank content by default (Plain format)
   }, []);
 
   const generateFilename = useCallback(() => {
@@ -217,6 +216,9 @@ export default function EditorPage() {
     
     let path = '';
     switch (postType) {
+      case 'plain':
+        path = `notes/${cleanTitle || 'untitled'}.md`;
+        break;
       case 'til':
         path = `til/${category || 'general'}/${cleanTitle || 'new-entry'}.md`;
         break;
@@ -355,17 +357,27 @@ export default function EditorPage() {
   // Auto-load template when dropdown changes
   const handleTypeChange = (newType: BlogPost['type']) => {
     if (newType !== postType) {
-      // Only load template if current content is empty or ask user
-      if (!content.trim()) {
-        setContent(templates[newType]);
-        localStorage.setItem('hackmd-content', templates[newType]);
-      } else {
-        const shouldLoadTemplate = window.confirm(
-          `Switch to ${newType.toUpperCase()} template? This will replace your current content.`
-        );
-        if (shouldLoadTemplate) {
+      // Only load template if it's not Plain format
+      if (newType !== 'plain') {
+        if (!content.trim()) {
           setContent(templates[newType]);
           localStorage.setItem('hackmd-content', templates[newType]);
+        } else {
+          const shouldLoadTemplate = window.confirm(
+            `Switch to ${newType.toUpperCase()} template? This will replace your current content.`
+          );
+          if (shouldLoadTemplate) {
+            setContent(templates[newType]);
+            localStorage.setItem('hackmd-content', templates[newType]);
+          }
+        }
+      } else {
+        // Plain format - clear content or ask to clear
+        if (content.trim() && !content.includes('# What I Learned') && !content.includes('Daily Reflection')) {
+          // Don't clear if it's custom content
+        } else {
+          setContent('');
+          localStorage.setItem('hackmd-content', '');
         }
       }
     }
@@ -438,6 +450,7 @@ export default function EditorPage() {
             onChange={(e) => handleTypeChange(e.target.value as BlogPost['type'])}
             className="template-select"
           >
+            <option value="plain">📄 Plain</option>
             <option value="til">💡 TIL</option>
             <option value="journal">📔 Journal</option>
             <option value="blog">📝 Blog</option>
@@ -496,6 +509,7 @@ export default function EditorPage() {
                 onClick={() => loadTemplate(type as BlogPost['type'])}
                 className="template-option"
               >
+                {type === 'plain' && '📄 Plain Template'}
                 {type === 'til' && '💡 TIL Template'}
                 {type === 'journal' && '📔 Journal Template'}
                 {type === 'blog' && '📝 Blog Template'}
