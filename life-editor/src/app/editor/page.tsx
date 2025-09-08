@@ -189,7 +189,7 @@ Wrap up your thoughts and provide next steps or further reading.
 
 export default function EditorPage() {
   const [content, setContent] = useState('');
-  const [showPreview, setShowPreview] = useState(true);
+  const [viewMode, setViewMode] = useState<'edit' | 'split' | 'preview'>('split');
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [filename, setFilename] = useState('');
@@ -529,6 +529,33 @@ export default function EditorPage() {
 
         {/* Templates Dropdown */}
         <div className="template-bar">
+          <div className="view-mode-toggle">
+            <button 
+              onClick={() => setViewMode('edit')}
+              className={`view-btn ${viewMode === 'edit' ? 'active' : ''}`}
+              title="Full Editor Mode"
+            >
+              <Edit3 size={16} />
+            </button>
+            <button 
+              onClick={() => setViewMode('split')}
+              className={`view-btn ${viewMode === 'split' ? 'active' : ''}`}
+              title="Split View"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <rect x="2" y="3" width="5" height="10" rx="1"/>
+                <rect x="9" y="3" width="5" height="10" rx="1"/>
+              </svg>
+            </button>
+            <button 
+              onClick={() => setViewMode('preview')}
+              className={`view-btn ${viewMode === 'preview' ? 'active' : ''}`}
+              title="Full Preview Mode"
+            >
+              <Eye size={16} />
+            </button>
+          </div>
+
           <select 
             value={postType}
             onChange={(e) => handleTypeChange(e.target.value as BlogPost['type'])}
@@ -638,97 +665,13 @@ export default function EditorPage() {
           </div>
         )}
 
-        {/* HackMD Toolbar - Exact replica */}
-        <div className="hackmd-toolbar">
-          <div className="toolbar-section">
-            <button title="Undo"><Undo size={16} /></button>
-            <button title="Redo"><Redo size={16} /></button>
-          </div>
-
-          <div className="toolbar-section">
-            <button onClick={() => insertMarkdown('**')} title="Bold" className="toolbar-btn">
-              <Bold size={16} />
-            </button>
-            <button onClick={() => insertMarkdown('*')} title="Italic" className="toolbar-btn">
-              <Italic size={16} />
-            </button>
-            <button onClick={() => insertMarkdown('<u>', '</u>')} title="Underline" className="toolbar-btn">
-              <Underline size={16} />
-            </button>
-            <button onClick={() => insertMarkdown('~~')} title="Strikethrough" className="toolbar-btn">
-              <Strikethrough size={16} />
-            </button>
-          </div>
-
-          <div className="toolbar-section">
-            <button onClick={() => insertAtCursor('\n# ')} title="Heading" className="toolbar-btn">H</button>
-            <button onClick={() => insertAtCursor('\n# ')} title="H1" className="toolbar-btn">H1</button>
-            <button onClick={() => insertAtCursor('\n## ')} title="H2" className="toolbar-btn">H2</button>
-            <button onClick={() => insertAtCursor('\n### ')} title="H3" className="toolbar-btn">H3</button>
-          </div>
-
-          <div className="toolbar-section">
-            <button onClick={() => insertMarkdown('`')} title="Inline Code" className="toolbar-btn">
-              <Code size={16} />
-            </button>
-            <button onClick={() => insertAtCursor('\n```\n\n```\n')} title="Code Block" className="toolbar-btn">⧈⧈</button>
-            <button onClick={() => insertAtCursor('\n```mermaid\ngraph TD\n    A[Start] --> B[End]\n```\n')} title="Mermaid Diagram" className="toolbar-btn">📊</button>
-          </div>
-
-          <div className="toolbar-section">
-            <button onClick={() => insertAtCursor('\n- ')} title="Bullet List" className="toolbar-btn">
-              <List size={16} />
-            </button>
-            <button onClick={() => insertAtCursor('\n1. ')} title="Numbered List" className="toolbar-btn">
-              <ListOrdered size={16} />
-            </button>
-            <button onClick={() => insertAtCursor('\n- [ ] ')} title="Task List" className="toolbar-btn">
-              <CheckSquare size={16} />
-            </button>
-          </div>
-
-          <div className="toolbar-section">
-            <button onClick={() => insertMarkdown('[', '](url)', 'link text')} title="Link" className="toolbar-btn">
-              <Link2 size={16} />
-            </button>
-            <button onClick={() => insertAtCursor('![alt text](image-url)')} title="Image" className="toolbar-btn">
-              <Image size={16} />
-            </button>
-            <button onClick={() => insertAtCursor('\n| Column 1 | Column 2 |\n|----------|----------|\n| Data 1   | Data 2   |\n')} title="Table" className="toolbar-btn">
-              <Table size={16} />
-            </button>
-          </div>
-
-          <div className="toolbar-section">
-            <button onClick={() => insertAtCursor('\n---\n')} title="Horizontal Rule" className="toolbar-btn">
-              <Minus size={16} />
-            </button>
-            <button onClick={() => insertAtCursor('\n> ')} title="Quote" className="toolbar-btn">
-              <Quote size={16} />
-            </button>
-          </div>
-
-          <div className="toolbar-section">
-            <button onClick={() => insertAtCursor('\n:::info\nInfo content\n:::')} title="Info" className="toolbar-btn info-btn">🛈</button>
-            <button onClick={() => insertAtCursor('\n:::warning\nWarning content\n:::')} title="Warning" className="toolbar-btn warning-btn">⚠</button>
-            <button onClick={() => insertAtCursor('\n:::danger\nDanger content\n:::')} title="Danger" className="toolbar-btn danger-btn">🚨</button>
-          </div>
-
-          <div className="toolbar-actions">
-            <button onClick={() => setShowPreview(!showPreview)} title="Toggle Preview" className="toolbar-btn">
-              {showPreview ? <EyeOff size={16} /> : <Eye size={16} />}
-            </button>
-            <button onClick={downloadFile} title="Download" className="toolbar-btn">
-              <Download size={16} />
-            </button>
-          </div>
-        </div>
 
 
         {/* Main Editor Area - Exact HackMD Layout */}
         <div className="hackmd-main">
           {/* Editor Side */}
-          <div className={`hackmd-editor-side ${showPreview ? 'split-mode' : 'full-mode'}`}>
+          {(viewMode === 'edit' || viewMode === 'split') && (
+            <div className={`hackmd-editor-side ${viewMode === 'split' ? 'split-mode' : 'full-mode'}`}>
             <div className="editor-wrapper">
               <div className="line-numbers-column">
                 {Array.from({ length: Math.max(lineCount, 20) }, (_, i) => (
@@ -747,11 +690,12 @@ export default function EditorPage() {
                 spellCheck="false"
               />
             </div>
-          </div>
+            </div>
+          )}
 
           {/* Preview Side */}
-          {showPreview && (
-            <div className="hackmd-preview-side">
+          {(viewMode === 'preview' || viewMode === 'split') && (
+            <div className={`hackmd-preview-side ${viewMode === 'preview' ? 'full-preview-mode' : 'split-preview-mode'}`}>
               <div className="preview-header-info">
                 <div className="preview-meta">
                   <div className="change-info">
@@ -973,6 +917,42 @@ export default function EditorPage() {
           padding: 8px 16px;
           border-bottom: 1px solid #373e47;
           font-size: 13px;
+        }
+
+        /* View Mode Toggle */
+        .view-mode-toggle {
+          display: flex;
+          background: #22272e;
+          border: 1px solid #373e47;
+          border-radius: 6px;
+          overflow: hidden;
+        }
+
+        .view-btn {
+          padding: 6px 10px;
+          background: none;
+          border: none;
+          color: #768390;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-right: 1px solid #373e47;
+          transition: all 0.2s ease;
+        }
+
+        .view-btn:last-child {
+          border-right: none;
+        }
+
+        .view-btn:hover {
+          background: #2d333b;
+          color: #adbac7;
+        }
+
+        .view-btn.active {
+          background: #4dabf7;
+          color: white;
         }
 
         .template-select, .category-input, .title-input {
@@ -1261,11 +1241,18 @@ export default function EditorPage() {
 
         /* Preview - Dark theme to match HackMD */
         .hackmd-preview-side {
-          width: 50%;
           background: #22272e; /* dark dimmed */
           overflow-y: auto;
           display: flex;
           flex-direction: column;
+        }
+
+        .split-preview-mode {
+          width: 50%;
+        }
+
+        .full-preview-mode {
+          width: 100%;
         }
 
         .preview-header-info {
