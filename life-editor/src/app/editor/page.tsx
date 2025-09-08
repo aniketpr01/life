@@ -549,15 +549,16 @@ export default function EditorPage() {
                   <div key={i + 1} className="line-number">{i + 1}</div>
                 ))}
               </div>
-              <SyntaxHighlightedEditor
+              <textarea
+                ref={textareaRef}
                 value={content}
-                onChange={(newValue) => {
-                  setContent(newValue);
-                  localStorage.setItem('hackmd-content', newValue);
-                  updateCursorPosition();
-                }}
-                onCursorChange={handleCursorMove}
+                onChange={handleContentChange}
+                onSelect={handleCursorMove}
+                onKeyUp={handleCursorMove}
+                onClick={handleCursorMove}
+                className="hackmd-editor-textarea"
                 placeholder=""
+                spellCheck="false"
               />
             </div>
           </div>
@@ -978,7 +979,7 @@ export default function EditorPage() {
         .hackmd-editor-textarea {
           flex: 1;
           background: #0f343a;
-          color: #ffffff;
+          color: #e8f4f8;
           border: none;
           outline: none;
           padding: 16px;

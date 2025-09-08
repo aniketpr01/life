@@ -130,7 +130,7 @@ export default function SyntaxHighlightedEditor({ value, onChange, onCursorChang
           font-size: 13px;
           line-height: 22px;
           background: transparent;
-          color: transparent;
+          color: #e8f4f8;
           caret-color: #ffffff;
           border: none;
           outline: none;
