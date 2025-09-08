@@ -245,22 +245,30 @@ export default function EditorPage() {
   };
 
   const generateFilename = useCallback(() => {
-    const date = new Date().toISOString().split('T')[0];
+    const today = new Date();
     const cleanTitle = title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
+    
+    // Generate DDMMYY format for today's date
+    const todayFormat = today.getDate().toString().padStart(2, '0') + 
+                       (today.getMonth() + 1).toString().padStart(2, '0') + 
+                       today.getFullYear().toString().slice(-2);
+    
+    const isoDate = today.toISOString().split('T')[0];
     
     let path = '';
     switch (postType) {
       case 'plain':
-        path = `notes/${cleanTitle || 'untitled'}.md`;
+        // Use today's date if no title provided
+        path = `notes/${cleanTitle || todayFormat}.md`;
         break;
       case 'til':
-        path = `til/${category || 'general'}/${cleanTitle || 'new-entry'}.md`;
+        path = `til/${category || 'general'}/${cleanTitle || todayFormat}.md`;
         break;
       case 'journal':
-        path = `daily-journal/${date.substring(0, 4)}/${date.substring(5, 7)}/${date.substring(8)}-${cleanTitle || 'entry'}.md`;
+        path = `daily-journal/${isoDate.substring(0, 4)}/${isoDate.substring(5, 7)}/${isoDate.substring(8)}-${cleanTitle || 'entry'}.md`;
         break;
       case 'blog':
-        path = `dev-blog/${date}-${cleanTitle || 'post'}.md`;
+        path = `dev-blog/${isoDate}-${cleanTitle || 'post'}.md`;
         break;
       case '100days':
         const dayNum = prompt('Enter day number (e.g., 002):') || '001';
@@ -315,8 +323,37 @@ export default function EditorPage() {
     try {
       const existingFile = await githubService.current.getFile(filename);
       
-      // If file exists and we're not already editing it, ask user
-      if (existingFile && !window.location.search.includes('edit=')) {
+      // Check if this is a daily file (no title provided, using today's date)
+      const isDaily = !title.trim() && filename.includes(new Date().getDate().toString().padStart(2, '0') + 
+                     (new Date().getMonth() + 1).toString().padStart(2, '0') + 
+                     new Date().getFullYear().toString().slice(-2));
+      
+      let finalContent = content;
+      let message = '';
+      
+      if (existingFile && isDaily && !window.location.search.includes('edit=')) {
+        // This is a daily file - append with timestamp
+        const currentTime = new Date().toLocaleTimeString('en-US', { 
+          hour12: false, 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        });
+        
+        const existingContent = atob(existingFile.content || '');
+        finalContent = existingContent + 
+                      '\n\n---\n' + 
+                      `**${currentTime}**\n\n` + 
+                      content;
+        
+        message = `Update daily notes - ${currentTime}`;
+        
+        setSaveStatus('saved');
+        // Don't ask to clear for daily updates, just clear editor
+        setContent('');
+        localStorage.removeItem('hackmd-content');
+        
+      } else if (existingFile && !window.location.search.includes('edit=')) {
+        // Regular file exists, ask user what to do
         setSaving(false);
         setSaveStatus('idle');
         
@@ -339,18 +376,19 @@ export default function EditorPage() {
             return; // Cancel operation
           }
         }
+      } else {
+        // New file or editing mode
+        message = `${existingFile ? 'Update' : 'Add'} ${filename.split('/').pop()}`;
       }
-      
-      const message = `${existingFile ? 'Update' : 'Add'} ${filename.split('/').pop()}`;
       
       const result = await githubService.current.createOrUpdateFile(
         filename,
-        content,
+        finalContent,
         message,
         existingFile?.sha
       );
 
-      if (result.success) {
+      if (result.success && !isDaily) {
         setSaveStatus('saved');
         if (window.confirm('Post saved to GitHub! Clear editor for new post?')) {
           setContent('');
@@ -360,10 +398,11 @@ export default function EditorPage() {
           // Clear URL params
           window.history.replaceState({}, '', '/editor');
         }
-      } else {
+      } else if (!result.success) {
         setSaveStatus('error');
         alert('Error saving to GitHub: ' + result.error);
       }
+      
     } catch (error) {
       setSaveStatus('error');
       alert('Failed to save to GitHub: ' + (error as Error).message);
@@ -541,6 +580,9 @@ export default function EditorPage() {
           
           <div className="status-indicators">
             <span className="filename-display">📁 {filename}</span>
+            {!title.trim() && (
+              <span className="daily-indicator">📅 Daily Entry - Will append if file exists</span>
+            )}
             {saveStatus === 'saved' && <span className="save-indicator saved">✅ Saved!</span>}
             {saveStatus === 'error' && <span className="save-indicator error">❌ Error</span>}
           </div>
@@ -1025,6 +1067,16 @@ export default function EditorPage() {
           font-size: 12px;
           font-weight: 500;
           font-family: monospace;
+        }
+
+        .daily-indicator {
+          padding: 4px 8px;
+          background: rgba(255, 206, 84, 0.1);
+          color: #ffce54;
+          border-radius: 4px;
+          font-size: 12px;
+          font-weight: 500;
+          font-style: italic;
         }
 
 
