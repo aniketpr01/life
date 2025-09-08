@@ -401,47 +401,6 @@ export default function EditorPage() {
   return (
     <>
       <div className="hackmd-container">
-        {/* HackMD Header - Exact replica */}
-        <div className="hackmd-header">
-          <div className="hackmd-header-left">
-            <div className="workspace-info">
-              <div className="workspace-avatar">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                  <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM12.735 14c.618 0 1.093-.561.872-1.139a6.002 6.002 0 0 0-11.215 0c-.22.578.254 1.139.872 1.139h9.47Z"/>
-                </svg>
-              </div>
-              <span className="workspace-name">My workspace</span>
-              <div className="workspace-icons">
-                <button title="Edit workspace"><Edit3 size={14} /></button>
-                <button title="Workspace settings"><Settings size={14} /></button>
-                <button title="View workspace"><Eye size={14} /></button>
-                <button title="Add new document">+</button>
-              </div>
-            </div>
-          </div>
-          
-          <div className="hackmd-header-center">
-            <div className="document-info">
-              <span className="document-icon">🔒</span>
-              <span className="document-path">My workspace / {title || 'Untitled'}</span>
-              <button title="Document info">ℹ️</button>
-              <button title="Document options"><MoreHorizontal size={14} /></button>
-            </div>
-          </div>
-          
-          <div className="hackmd-header-right">
-            <div className="header-actions">
-              <span className="view-count">👁 1</span>
-              <ChevronDown size={14} />
-              <div className="user-avatar">A</div>
-              <button className="share-button">
-                <Share2 size={14} />
-                Share
-              </button>
-              <button title="More options"><MoreHorizontal size={14} /></button>
-            </div>
-          </div>
-        </div>
 
         {/* Templates Dropdown */}
         <div className="template-bar">
@@ -780,132 +739,6 @@ export default function EditorPage() {
           color: #333;
         }
 
-        /* Header - Exact HackMD styling */
-        .hackmd-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          background: #22272e; /* dark dimmed */
-          color: #adbac7;
-          padding: 8px 16px;
-          height: 44px;
-          font-size: 13px;
-        }
-
-        .hackmd-header-left {
-          display: flex;
-          align-items: center;
-        }
-
-        .workspace-info {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-
-        .workspace-avatar {
-          width: 20px;
-          height: 20px;
-          background: #666;
-          border-radius: 3px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #ccc;
-        }
-
-        .workspace-name {
-          color: #ccc;
-          font-weight: normal;
-        }
-
-        .workspace-icons {
-          display: flex;
-          gap: 4px;
-          margin-left: 8px;
-        }
-
-        .workspace-icons button {
-          background: none;
-          border: none;
-          color: #999;
-          cursor: pointer;
-          padding: 2px;
-          font-size: 12px;
-        }
-
-        .workspace-icons button:hover {
-          color: #ccc;
-        }
-
-        .hackmd-header-center {
-          display: flex;
-          align-items: center;
-        }
-
-        .document-info {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          background: rgba(173, 186, 199, 0.08);
-          padding: 4px 12px;
-          border-radius: 4px;
-        }
-
-        .document-icon {
-          font-size: 12px;
-        }
-
-        .document-path {
-          color: #adbac7;
-          font-size: 13px;
-        }
-
-        .hackmd-header-right {
-          display: flex;
-          align-items: center;
-        }
-
-        .header-actions {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-
-        .view-count {
-          color: #768390;
-          font-size: 12px;
-        }
-
-        .user-avatar {
-          width: 24px;
-          height: 24px;
-          background: #4dabf7;
-          color: white;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 12px;
-          font-weight: 500;
-        }
-
-        .share-button {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          padding: 6px 12px;
-          background: #316dca;
-          color: #cdd9e5;
-          border: none;
-          border-radius: 6px;
-          font-size: 13px;
-          cursor: pointer;
-        }
-
-        .share-button:hover {
-          background: #4683d6;
-        }
 
         /* Template Bar */
         .template-bar {
@@ -968,12 +801,13 @@ export default function EditorPage() {
           background: #4dabf7;
           color: white;
           border: 1px solid #339af0;
+          box-shadow: 0 2px 8px rgba(77, 171, 247, 0.3);
         }
 
         .prominent-viewer-btn:hover {
           background: #339af0;
           transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(77, 171, 247, 0.4);
+          box-shadow: 0 6px 16px rgba(77, 171, 247, 0.4);
         }
 
         .prominent-github-btn {
