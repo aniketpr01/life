@@ -642,6 +642,8 @@ export default function EditorPage() {
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm, remarkBreaks]}
                   rehypePlugins={[rehypeHighlight, rehypeRaw]}
+                  skipHtml={false}
+                  allowDangerousHtml={true}
                   components={{
                     div: ({ className, children, ...props }) => {
                       if (className?.includes('info')) {
@@ -687,36 +689,17 @@ export default function EditorPage() {
                       </p>
                     ),
                     h1: ({ children, ...props }) => (
-                      <h1 {...props} style={{ 
-                        color: '#f0f6fc', 
-                        fontSize: '2rem', 
-                        fontWeight: '600',
-                        marginBottom: '16px',
-                        borderBottom: '1px solid #373e47',
-                        paddingBottom: '8px'
-                      }}>
+                      <h1 {...props} className="preview-h1">
                         {children}
                       </h1>
                     ),
                     h2: ({ children, ...props }) => (
-                      <h2 {...props} style={{ 
-                        color: '#f0f6fc', 
-                        fontSize: '1.5rem', 
-                        fontWeight: '600',
-                        marginBottom: '12px',
-                        marginTop: '24px'
-                      }}>
+                      <h2 {...props} className="preview-h2">
                         {children}
                       </h2>
                     ),
                     h3: ({ children, ...props }) => (
-                      <h3 {...props} style={{ 
-                        color: '#f0f6fc', 
-                        fontSize: '1.25rem', 
-                        fontWeight: '600',
-                        marginBottom: '8px',
-                        marginTop: '20px'
-                      }}>
+                      <h3 {...props} className="preview-h3">
                         {children}
                       </h3>
                     ),
@@ -1275,6 +1258,36 @@ export default function EditorPage() {
 
         .preview-content-area li::marker {
           color: #4dabf7 !important;
+        }
+
+        /* Fix header rendering */
+        .preview-h1 {
+          color: #f0f6fc !important;
+          font-size: 2rem !important;
+          font-weight: 600 !important;
+          margin-bottom: 16px !important;
+          margin-top: 24px !important;
+          border-bottom: 1px solid #373e47 !important;
+          padding-bottom: 8px !important;
+          display: block !important;
+        }
+
+        .preview-h2 {
+          color: #f0f6fc !important;
+          font-size: 1.5rem !important;
+          font-weight: 600 !important;
+          margin-bottom: 12px !important;
+          margin-top: 24px !important;
+          display: block !important;
+        }
+
+        .preview-h3 {
+          color: #f0f6fc !important;
+          font-size: 1.25rem !important;
+          font-weight: 600 !important;
+          margin-bottom: 8px !important;
+          margin-top: 20px !important;
+          display: block !important;
         }
 
         .preview-content-area code {
