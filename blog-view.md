@@ -3,14 +3,12 @@
 
 ## Page 1
 ### 📅 Monday, September 08, 2025
-#### 💡 Marlin Signature and Verification
+#### 💡 New Entry
 *Type: TIL | [View Full Entry](til/general/new-entry.md)*
 
-It provides a trustless signing service where signatures are generated inside TEEs using deterministically derived secp256k1 keys. These signatures can be verified on-chain without exposing private keys, ensuring complete transparency and security
-### Core Components
+Testing it again
 
-1. **Signing Server** - HTTP service running inside Oyster CVM enclave that signs payloads using KMS-derived secp256k1 keys
-2. **Nautilus KMS Integration** - Local derive server providing deterministic key derivation based on encla... *[Continue reading →]*
+lets test this again
 
 #### 📚 Full Stack Web Development Learning Journey
 *Type: Learning | [View Full Entry](learning-log/fullstack-webdev.md)*
@@ -140,5 +138,5 @@ Starting this 100 Days of Code challenge feels both exciting and daunting. Today
 ---
 
 
-*Generated on September 08, 2025 at 07:14 AM*
+*Generated on September 08, 2025 at 07:28 AM*
 *Total Entries: 10*
