@@ -6,7 +6,7 @@ import {
   List, ListOrdered, Quote, Code, Link2, Image, Table, Minus, CheckSquare,
   Home, Upload, Download, Eye, EyeOff, Settings, Share2, MoreHorizontal,
   Search, ChevronDown, User, Save, Clock, Edit3, FileText, PenTool,
-  Undo, Redo, AlignLeft, AlignCenter, AlignRight, Type, Hash
+  Undo, Redo, AlignLeft, AlignCenter, AlignRight, Type, Hash, Loader2
 } from 'lucide-react';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
@@ -494,10 +494,6 @@ export default function EditorPage() {
           >
             🗑️ Clear
           </button>
-          
-          <Link href="/viewer" className="view-posts-btn">
-            📚 View Posts
-          </Link>
         </div>
 
         {/* Template Buttons */}
@@ -603,9 +599,40 @@ export default function EditorPage() {
             <button onClick={downloadFile} title="Download" className="toolbar-btn">
               <Download size={16} />
             </button>
-            <button onClick={saveToGitHub} disabled={saving} title="Push to GitHub" className="toolbar-btn github-btn">
-              <Upload size={16} />
+          </div>
+        </div>
+
+        {/* Prominent Action Buttons */}
+        <div className="action-bar">
+          <div className="action-buttons">
+            <Link href="/viewer" className="action-btn viewer-btn">
+              <Eye size={18} />
+              View All Posts
+            </Link>
+            
+            <button 
+              onClick={saveToGitHub} 
+              disabled={saving} 
+              className="action-btn github-btn"
+              title="Push to GitHub"
+            >
+              {saving ? (
+                <>
+                  <Loader2 size={18} className="animate-spin" />
+                  Pushing...
+                </>
+              ) : (
+                <>
+                  <Upload size={18} />
+                  Push to GitHub
+                </>
+              )}
             </button>
+          </div>
+          
+          <div className="save-status-display">
+            {saveStatus === 'saved' && <span className="status-saved">✅ Saved to GitHub!</span>}
+            {saveStatus === 'error' && <span className="status-error">❌ Push failed</span>}
           </div>
         </div>
 
@@ -924,6 +951,91 @@ export default function EditorPage() {
 
         .clear-btn:hover {
           background: #c82333;
+        }
+
+        /* Prominent Action Bar */
+        .action-bar {
+          background: #22272e;
+          border-bottom: 1px solid #373e47;
+          padding: 12px 16px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          min-height: 52px;
+        }
+
+        .action-buttons {
+          display: flex;
+          gap: 12px;
+          align-items: center;
+        }
+
+        .action-btn {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 10px 20px;
+          border: none;
+          border-radius: 6px;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          text-decoration: none;
+          min-width: 140px;
+          justify-content: center;
+        }
+
+        .viewer-btn {
+          background: #2d333b;
+          color: #adbac7;
+          border: 1px solid #444c56;
+        }
+
+        .viewer-btn:hover {
+          background: #373e47;
+          color: #cdd9e5;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .github-btn {
+          background: #238636;
+          color: #ffffff;
+          border: 1px solid #2ea043;
+          box-shadow: 0 2px 4px rgba(35, 134, 54, 0.2);
+        }
+
+        .github-btn:hover {
+          background: #2ea043;
+          transform: translateY(-1px);
+          box-shadow: 0 6px 12px rgba(35, 134, 54, 0.3);
+        }
+
+        .github-btn:disabled {
+          background: #656d76;
+          border-color: #656d76;
+          cursor: not-allowed;
+          transform: none;
+          box-shadow: none;
+        }
+
+        .save-status-display {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .status-saved {
+          color: #3fb950;
+          font-weight: 600;
+          font-size: 14px;
+        }
+
+        .status-error {
+          color: #f85149;
+          font-weight: 600;
+          font-size: 14px;
         }
 
         .template-popup {
