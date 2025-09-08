@@ -454,7 +454,7 @@ export default function EditorPage() {
             🗑️ Clear
           </button>
           
-          <Link href="/viewer" className="prominent-viewer-btn">
+          <Link href="/viewer" className="prominent-viewer-btn" style={{ color: '#ffffff', textDecoration: 'none' }}>
             👁️ View All Posts
           </Link>
           
@@ -799,13 +799,14 @@ export default function EditorPage() {
 
         .prominent-viewer-btn {
           background: #4dabf7;
-          color: white;
+          color: #ffffff !important;
           border: 1px solid #339af0;
           box-shadow: 0 2px 8px rgba(77, 171, 247, 0.3);
         }
 
         .prominent-viewer-btn:hover {
           background: #339af0;
+          color: #ffffff !important;
           transform: translateY(-1px);
           box-shadow: 0 6px 16px rgba(77, 171, 247, 0.4);
         }
