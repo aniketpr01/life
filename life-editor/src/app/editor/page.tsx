@@ -350,92 +350,28 @@ export default function EditorPage() {
     try {
       const existingFile = await githubService.current.getFile(filename);
       
-      // Check if this is a daily file (no title provided, using today's date)
-      const isDaily = !title.trim() && filename.includes(new Date().getDate().toString().padStart(2, '0') + 
-                     (new Date().getMonth() + 1).toString().padStart(2, '0') + 
-                     new Date().getFullYear().toString().slice(-2));
-      
-      let finalContent = content;
-      let message = '';
-      
-      if (existingFile && isDaily && !window.location.search.includes('edit=')) {
-        // This is a daily file - GUARANTEED APPEND ONLY, absolutely NO overwriting
-        const now = new Date();
-        
-        // Convert to IST using proper timezone
-        const currentTimeIST = new Intl.DateTimeFormat('en-US', {
-          timeZone: 'Asia/Kolkata',
-          hour: 'numeric',
-          minute: '2-digit',
-          hour12: true
-        }).format(now);
-        
-        // CRITICAL: Always fetch the latest file content to avoid overwriting
-        const latestFile = await githubService.current.getFile(filename);
-        if (!latestFile || !latestFile.content) {
-          setSaveStatus('error');
-          alert('Error: Could not fetch latest file content for appending');
-          setSaving(false);
-          return;
-        }
-        
-        const existingContent = atob(latestFile.content.replace(/\s/g, '') || '');
-        
-        // FOOLPROOF APPEND: Always preserve existing content
-        finalContent = existingContent.trim() + 
-                      '\n\n---\n\n' + 
-                      `## ${currentTimeIST}\n\n` + 
-                      content.trim();
-        
-        message = `Append daily entry - ${currentTimeIST}`;
-        
-        console.log('APPENDING TO DAILY FILE:');
-        console.log('Existing content length:', existingContent.length);
-        console.log('New content length:', content.length);
-        console.log('Final content length:', finalContent.length);
-        console.log('Will use SHA:', latestFile.sha);
-        
-        // Execute the append with latest SHA
-        const result = await githubService.current.createOrUpdateFile(
-          filename,
-          finalContent,
-          message,
-          latestFile.sha
-        );
-
-        if (result.success) {
-          setSaveStatus('saved');
-          // Auto-clear for next entry
-          setContent('');
-          localStorage.removeItem('hackmd-content');
-          setTimeout(() => setSaveStatus('idle'), 2000);
-          console.log('✅ Successfully appended to daily file');
-        } else {
-          setSaveStatus('error');
-          alert('Error appending to daily file: ' + result.error);
-          console.error('❌ Failed to append:', result.error);
-        }
-        
-        setSaving(false);
-        return; // Exit early for daily append
-        
-      } else if (existingFile && !window.location.search.includes('edit=')) {
-        // Regular file exists, ask user what to do
+      // TEMPORARY SAFETY: Disable daily append until we can make it 100% safe
+      if (existingFile && !window.location.search.includes('edit=')) {
+        // File exists - ALWAYS ask user, never auto-append (safety first)
         setSaving(false);
         setSaveStatus('idle');
         
+        const isDaily = !title.trim() && filename.includes(new Date().getDate().toString().padStart(2, '0') + 
+                       (new Date().getMonth() + 1).toString().padStart(2, '0') + 
+                       new Date().getFullYear().toString().slice(-2));
+        
         const action = window.confirm(
-          `File "${filename}" already exists. Click OK to edit the existing file, or Cancel to create a new file with a different name.`
+          `File "${filename}" already exists. ${isDaily ? '⚠️ DAILY FILE DETECTED' : ''}\n\nClick OK to edit the existing file (SAFE), or Cancel to create a new file with a different name.`
         );
         
         if (action) {
-          // Redirect to edit the existing file
+          // Redirect to edit the existing file (SAFE option)
           const editUrl = `/editor?edit=${encodeURIComponent(filename)}&title=${encodeURIComponent(title || filename.split('/').pop()?.replace('.md', '') || 'Untitled')}`;
           window.location.href = editUrl;
           return;
         } else {
-          // Ask for new filename
-          const newTitle = prompt('Enter a new title for your post:');
+          // Ask for new filename to avoid conflicts
+          const newTitle = prompt('Enter a new title for your post (to avoid overwriting):');
           if (newTitle) {
             setTitle(newTitle);
             return; // This will regenerate filename
@@ -843,12 +779,7 @@ export default function EditorPage() {
             <span className="filename-display">📁 {filename}</span>
             {!title.trim() && mounted && (
               <span className="daily-indicator">
-                📅 Daily Entry - Will append to today's file at {new Intl.DateTimeFormat('en-US', {
-                  timeZone: 'Asia/Kolkata',
-                  hour: 'numeric',
-                  minute: '2-digit',
-                  hour12: true
-                }).format(new Date())} IST
+                ⚠️ Daily File - Will ask before overwriting (SAFE MODE)
               </span>
             )}
             {saveStatus === 'saved' && <span className="save-indicator saved">✅ Saved!</span>}
