@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Life Editor - Write Your Journal</title>
+    
+    <!-- Marked.js for Markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Highlight.js for syntax highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <!-- DOMPurify for XSS protection -->
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .header {
+            background: #16213e;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #0f3460;
+            height: 60px;
+        }
+        
+        .header h1 {
+            font-size: 1.5em;
+            color: #e94560;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            background: #e94560;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn:hover {
+            background: #c13651;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: #0f3460;
+        }
+        
+        .btn-secondary:hover {
+            background: #1e5f8e;
+        }
+        
+        .btn-success {
+            background: #4caf50;
+        }
+        
+        .btn-success:hover {
+            background: #45a049;
+        }
+        
+        .metadata-bar {
+            background: #0f3460;
+            padding: 10px 20px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .metadata-bar select,
+        .metadata-bar input {
+            padding: 5px 10px;
+            background: #16213e;
+            color: #eee;
+            border: 1px solid #1e5f8e;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+        
+        .metadata-bar label {
+            font-size: 14px;
+            color: #aaa;
+        }
+        
+        .editor-container {
+            display: flex;
+            height: calc(100vh - 120px);
+        }
+        
+        .editor-pane,
+        .preview-pane {
+            flex: 1;
+            overflow: auto;
+            position: relative;
+        }
+        
+        .editor-pane {
+            background: #16213e;
+            border-right: 2px solid #0f3460;
+        }
+        
+        .preview-pane {
+            background: #fff;
+            color: #333;
+            padding: 20px;
+        }
+        
+        #editor {
+            width: 100%;
+            height: 100%;
+            padding: 20px;
+            background: transparent;
+            color: #eee;
+            border: none;
+            outline: none;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            resize: none;
+        }
+        
+        .pane-header {
+            position: sticky;
+            top: 0;
+            background: #0f3460;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: bold;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .word-count {
+            font-size: 12px;
+            color: #aaa;
+        }
+        
+        /* Preview Styles */
+        .preview-content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .preview-content h1 {
+            color: #333;
+            border-bottom: 2px solid #e94560;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .preview-content h2 {
+            color: #444;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+        
+        .preview-content h3 {
+            color: #555;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .preview-content p {
+            line-height: 1.8;
+            margin-bottom: 15px;
+        }
+        
+        .preview-content code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .preview-content pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+        
+        .preview-content pre code {
+            background: transparent;
+            padding: 0;
+        }
+        
+        .preview-content blockquote {
+            border-left: 4px solid #e94560;
+            padding-left: 20px;
+            margin: 20px 0;
+            color: #666;
+            font-style: italic;
+        }
+        
+        .preview-content ul,
+        .preview-content ol {
+            margin-left: 30px;
+            margin-bottom: 15px;
+        }
+        
+        .preview-content li {
+            margin-bottom: 5px;
+            line-height: 1.8;
+        }
+        
+        .preview-content a {
+            color: #e94560;
+            text-decoration: none;
+        }
+        
+        .preview-content a:hover {
+            text-decoration: underline;
+        }
+        
+        .preview-content img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        
+        .preview-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        .preview-content th,
+        .preview-content td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        
+        .preview-content th {
+            background: #f5f5f5;
+            font-weight: bold;
+        }
+        
+        .templates-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background: #16213e;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-header h2 {
+            color: #e94560;
+        }
+        
+        .close-modal {
+            font-size: 30px;
+            color: #aaa;
+            cursor: pointer;
+            border: none;
+            background: none;
+        }
+        
+        .close-modal:hover {
+            color: #fff;
+        }
+        
+        .template-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        
+        .template-card {
+            background: #0f3460;
+            padding: 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .template-card:hover {
+            background: #1e5f8e;
+            transform: translateY(-2px);
+        }
+        
+        .template-card h3 {
+            color: #e94560;
+            margin-bottom: 5px;
+        }
+        
+        .template-card p {
+            color: #aaa;
+            font-size: 14px;
+        }
+        
+        .status-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #0f3460;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+        }
+        
+        .status-message {
+            padding: 5px 10px;
+            border-radius: 3px;
+            background: #4caf50;
+            color: white;
+            display: none;
+        }
+        
+        .status-message.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @media (max-width: 768px) {
+            .editor-container {
+                flex-direction: column;
+            }
+            
+            .editor-pane {
+                border-right: none;
+                border-bottom: 2px solid #0f3460;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>✍️ Life Editor</h1>
+        <div class="nav-buttons">
+            <button class="btn btn-secondary" onclick="loadTemplate()">📝 Templates</button>
+            <button class="btn btn-success" onclick="saveToGitHub()">💾 Save to GitHub</button>
+            <a href="viewer.html" class="btn">📚 View Posts</a>
+            <a href="index.html" class="btn btn-secondary">🏠 Home</a>
+        </div>
+    </div>
+    
+    <div class="metadata-bar">
+        <label>
+            Type:
+            <select id="entryType" onchange="updateFileName()">
+                <option value="til">TIL (Today I Learned)</option>
+                <option value="journal">Daily Journal</option>
+                <option value="blog">Dev Blog</option>
+                <option value="100days">100 Days of Code</option>
+                <option value="learning">Learning Log</option>
+            </select>
+        </label>
+        
+        <label>
+            Category:
+            <input type="text" id="category" placeholder="e.g., javascript, git" onkeyup="updateFileName()">
+        </label>
+        
+        <label>
+            Title:
+            <input type="text" id="title" placeholder="Entry title" onkeyup="updateFileName()" style="width: 300px;">
+        </label>
+        
+        <label>
+            Filename:
+            <input type="text" id="filename" readonly style="width: 400px; background: #0a1929;">
+        </label>
+    </div>
+    
+    <div class="editor-container">
+        <div class="editor-pane">
+            <div class="pane-header">
+                <span>Markdown Editor</span>
+                <span class="word-count" id="wordCount">0 words | 0 chars</span>
+            </div>
+            <textarea id="editor" placeholder="Start writing your markdown here...
+
+# Your Title Here
+
+Start writing your content. Use markdown syntax:
+- **Bold text**
+- *Italic text*
+- `inline code`
+- [Links](https://example.com)
+
+```javascript
+// Code blocks with syntax highlighting
+const hello = 'World';
+```"></textarea>
+        </div>
+        
+        <div class="preview-pane">
+            <div class="pane-header">
+                <span>Live Preview</span>
+                <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px;" onclick="togglePreview()">
+                    Toggle Theme
+                </button>
+            </div>
+            <div id="preview" class="preview-content"></div>
+        </div>
+    </div>
+    
+    <div class="templates-modal" id="templatesModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Choose a Template</h2>
+                <button class="close-modal" onclick="closeTemplates()">&times;</button>
+            </div>
+            <div class="template-grid">
+                <div class="template-card" onclick="useTemplate('til')">
+                    <h3>💡 TIL</h3>
+                    <p>Quick learning note</p>
+                </div>
+                <div class="template-card" onclick="useTemplate('journal')">
+                    <h3>📔 Daily Journal</h3>
+                    <p>Daily reflection template</p>
+                </div>
+                <div class="template-card" onclick="useTemplate('blog')">
+                    <h3>📝 Dev Blog</h3>
+                    <p>Technical article template</p>
+                </div>
+                <div class="template-card" onclick="useTemplate('100days')">
+                    <h3>💪 100 Days</h3>
+                    <p>Code challenge log</p>
+                </div>
+                <div class="template-card" onclick="useTemplate('learning')">
+                    <h3>📚 Learning Log</h3>
+                    <p>Course progress tracker</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="status-bar">
+        <span>Auto-save: Disabled (GitHub API required)</span>
+        <span class="status-message" id="statusMessage"></span>
+    </div>
+    
+    <script>
+        // Initialize marked options
+        marked.setOptions({
+            highlight: function(code, lang) {
+                if (lang && hljs.getLanguage(lang)) {
+                    return hljs.highlight(code, { language: lang }).value;
+                }
+                return hljs.highlightAuto(code).value;
+            },
+            breaks: true,
+            gfm: true
+        });
+        
+        const editor = document.getElementById('editor');
+        const preview = document.getElementById('preview');
+        const wordCount = document.getElementById('wordCount');
+        const statusMessage = document.getElementById('statusMessage');
+        
+        // Load saved content from localStorage
+        const savedContent = localStorage.getItem('editorContent');
+        if (savedContent) {
+            editor.value = savedContent;
+            updatePreview();
+        }
+        
+        // Update preview on input
+        editor.addEventListener('input', () => {
+            updatePreview();
+            updateWordCount();
+            // Auto-save to localStorage
+            localStorage.setItem('editorContent', editor.value);
+        });
+        
+        function updatePreview() {
+            const markdownText = editor.value;
+            const html = marked.parse(markdownText);
+            const cleanHtml = DOMPurify.sanitize(html);
+            preview.innerHTML = cleanHtml;
+            
+            // Re-highlight code blocks
+            preview.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightElement(block);
+            });
+        }
+        
+        function updateWordCount() {
+            const text = editor.value;
+            const words = text.trim().split(/\s+/).filter(word => word.length > 0).length;
+            const chars = text.length;
+            wordCount.textContent = `${words} words | ${chars} chars`;
+        }
+        
+        function updateFileName() {
+            const type = document.getElementById('entryType').value;
+            const category = document.getElementById('category').value;
+            const title = document.getElementById('title').value;
+            const date = new Date().toISOString().split('T')[0];
+            
+            let filename = '';
+            
+            switch(type) {
+                case 'til':
+                    filename = `til/${category || 'general'}/${title ? title.toLowerCase().replace(/\s+/g, '-') : 'new-entry'}.md`;
+                    break;
+                case 'journal':
+                    filename = `daily-journal/${date.substring(0, 4)}/${date.substring(5, 7)}/${date.substring(8)}-${title ? title.toLowerCase().replace(/\s+/g, '-') : 'entry'}.md`;
+                    break;
+                case 'blog':
+                    filename = `dev-blog/${date}-${title ? title.toLowerCase().replace(/\s+/g, '-') : 'post'}.md`;
+                    break;
+                case '100days':
+                    const dayNum = prompt('Enter day number (e.g., 002):') || '001';
+                    filename = `100-days-of-code/day-${dayNum.padStart(3, '0')}.md`;
+                    break;
+                case 'learning':
+                    filename = `learning-log/${title ? title.toLowerCase().replace(/\s+/g, '-') : 'topic'}.md`;
+                    break;
+            }
+            
+            document.getElementById('filename').value = filename;
+        }
+        
+        function loadTemplate() {
+            document.getElementById('templatesModal').style.display = 'flex';
+        }
+        
+        function closeTemplates() {
+            document.getElementById('templatesModal').style.display = 'none';
+        }
+        
+        function useTemplate(type) {
+            const templates = {
+                til: `# [Topic Title]
+
+[Brief description of what you learned]
+
+\`\`\`javascript
+// Code example if applicable
+\`\`\`
+
+**Key Learning:** [Main takeaway]
+
+*Date: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}*
+*Tags: #tag1 #tag2*`,
+                
+                journal: `# ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} - [Title]
+
+## 🎯 Today's Goals
+- [ ] Goal 1
+- [ ] Goal 2
+- [ ] Goal 3
+
+## 💭 Thoughts
+[Your thoughts for the day]
+
+## 🚀 What I Accomplished
+- Item 1
+- Item 2
+
+## 📚 What I Learned
+- Learning 1
+- Learning 2
+
+## 🔮 Tomorrow's Focus
+- Task 1
+- Task 2
+
+## 🙏 Gratitude
+[What you're grateful for]
+
+---
+
+*Mood: [Your mood]*
+*Weather: [Weather]*
+*Listening to: [Music/Podcast]*`,
+                
+                blog: `# [Blog Title]
+
+*Published: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} | [X] min read*
+
+## Introduction
+[Hook and introduction]
+
+## [Main Section 1]
+[Content]
+
+### [Subsection]
+[Content]
+
+\`\`\`javascript
+// Code examples
+\`\`\`
+
+## [Main Section 2]
+[Content]
+
+## Best Practices
+1. **Practice 1**: Description
+2. **Practice 2**: Description
+
+## Conclusion
+[Wrap up and key takeaways]
+
+## Resources
+- [Resource 1](url)
+- [Resource 2](url)
+
+---
+
+*Have questions? [Contact info]*
+
+**Tags:** #tag1 #tag2 #tag3`,
+                
+                '100days': `# Day [X] - [Topic/Project Name]
+
+**Date:** ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+
+## Today's Progress
+✅ Achievement 1
+✅ Achievement 2
+✅ Achievement 3
+
+## Thoughts
+[Reflection on the day's work]
+
+## What I Learned
+- Learning point 1
+- Learning point 2
+
+## Code Snippets
+\`\`\`javascript
+// Your code
+\`\`\`
+
+## Link to Work
+- [Link 1](url)
+- [Link 2](url)
+
+## Tomorrow's Plan
+- Task 1
+- Task 2
+
+---
+
+**Time Spent:** [X] hours
+**Total Time:** [X] hours
+
+#100DaysOfCode #Day[X] #[Topic]`,
+                
+                learning: `# [Course/Topic Name] Learning Journey
+
+## Overview
+**Started:** ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+**Goal:** [Your goal]
+**Timeline:** [Expected duration]
+
+## Learning Path
+
+### Phase 1: [Phase Name] (Week X-Y)
+- [ ] Topic 1
+- [ ] Topic 2
+- [ ] Topic 3
+
+## Resources
+
+### Courses
+- [ ] **Course Name** - Platform
+
+### Books
+- [ ] "Book Title" by Author
+
+## Current Focus
+🎯 **This Week:** [Current topic]
+
+## Notes & Key Concepts
+
+### [Concept Name]
+\`\`\`javascript
+// Code example
+\`\`\`
+**Key Insight:** [Your understanding]
+
+## Reflections
+
+**Week X:** [Your reflection]
+
+---
+
+*Last Updated: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}*`
+            };
+            
+            editor.value = templates[type] || '';
+            updatePreview();
+            updateWordCount();
+            closeTemplates();
+            
+            // Update entry type dropdown
+            document.getElementById('entryType').value = type === '100days' ? '100days' : type;
+            updateFileName();
+        }
+        
+        function togglePreview() {
+            const previewPane = document.querySelector('.preview-pane');
+            if (previewPane.style.background === 'rgb(26, 26, 46)') {
+                previewPane.style.background = '#fff';
+                previewPane.style.color = '#333';
+            } else {
+                previewPane.style.background = '#1a1a2e';
+                previewPane.style.color = '#eee';
+            }
+        }
+        
+        function showStatus(message, type = 'success') {
+            statusMessage.textContent = message;
+            statusMessage.style.background = type === 'success' ? '#4caf50' : '#f44336';
+            statusMessage.classList.add('show');
+            
+            setTimeout(() => {
+                statusMessage.classList.remove('show');
+            }, 3000);
+        }
+        
+        async function saveToGitHub() {
+            const content = editor.value;
+            const filename = document.getElementById('filename').value;
+            
+            if (!content || !filename) {
+                showStatus('Please add content and filename', 'error');
+                return;
+            }
+            
+            // Create a downloadable file as fallback
+            const blob = new Blob([content], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename.split('/').pop();
+            a.click();
+            
+            showStatus('File downloaded! Commit it using: git add . && git commit -m "Add new entry" && git push', 'success');
+            
+            // Store in localStorage with metadata
+            const entries = JSON.parse(localStorage.getItem('journalEntries') || '[]');
+            entries.unshift({
+                filename: filename,
+                content: content,
+                date: new Date().toISOString(),
+                type: document.getElementById('entryType').value
+            });
+            localStorage.setItem('journalEntries', JSON.stringify(entries.slice(0, 100))); // Keep last 100 entries
+        }
+        
+        // Initialize
+        updatePreview();
+        updateWordCount();
+        updateFileName();
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Ctrl/Cmd + S to save
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                saveToGitHub();
+            }
+            
+            // Ctrl/Cmd + B for bold
+            if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+                e.preventDefault();
+                insertMarkdown('**', '**');
+            }
+            
+            // Ctrl/Cmd + I for italic
+            if ((e.ctrlKey || e.metaKey) && e.key === 'i') {
+                e.preventDefault();
+                insertMarkdown('*', '*');
+            }
+        });
+        
+        function insertMarkdown(before, after) {
+            const start = editor.selectionStart;
+            const end = editor.selectionEnd;
+            const text = editor.value;
+            const selectedText = text.substring(start, end) || 'text';
+            
+            editor.value = text.substring(0, start) + before + selectedText + after + text.substring(end);
+            editor.focus();
+            editor.setSelectionRange(start + before.length, start + before.length + selectedText.length);
+            updatePreview();
+        }
+    </script>
+</body>
+</html>

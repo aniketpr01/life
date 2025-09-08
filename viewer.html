@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Life - Blog Viewer</title>
+    
+    <!-- Marked.js for Markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Highlight.js for syntax highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <!-- DOMPurify for XSS protection -->
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            font-size: 2em;
+            color: #667eea;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .btn:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #764ba2;
+        }
+        
+        .btn-secondary:hover {
+            background: #6b4299;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .filter-bar {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .filter-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .filter-group label {
+            font-weight: 600;
+            color: #4a5568;
+        }
+        
+        .filter-group select,
+        .filter-group input {
+            padding: 8px 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .filter-group select:focus,
+        .filter-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .posts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .post-card {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .post-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+        
+        .post-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            color: white;
+        }
+        
+        .post-type {
+            display: inline-block;
+            padding: 4px 8px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 4px;
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+        
+        .post-title {
+            font-size: 1.3em;
+            margin-bottom: 5px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .post-date {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        
+        .post-content {
+            padding: 20px;
+            color: #4a5568;
+            line-height: 1.6;
+            max-height: 150px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .post-content::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+            background: linear-gradient(transparent, white);
+        }
+        
+        .post-footer {
+            padding: 15px 20px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .post-tags {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        
+        .tag {
+            padding: 3px 8px;
+            background: #edf2f7;
+            color: #667eea;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        
+        .read-more {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .read-more:hover {
+            text-decoration: underline;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        
+        .modal-content {
+            background: white;
+            max-width: 900px;
+            margin: 50px auto;
+            border-radius: 10px;
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 30px;
+            color: white;
+            border-radius: 10px 10px 0 0;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 30px;
+            color: white;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+        
+        .close-modal:hover {
+            opacity: 0.8;
+        }
+        
+        .modal-body {
+            padding: 30px;
+        }
+        
+        .modal-body h1 { color: #2d3748; margin-bottom: 20px; }
+        .modal-body h2 { color: #4a5568; margin: 30px 0 15px; }
+        .modal-body h3 { color: #718096; margin: 20px 0 10px; }
+        .modal-body p { line-height: 1.8; margin-bottom: 15px; color: #4a5568; }
+        .modal-body code { background: #f7fafc; padding: 2px 6px; border-radius: 3px; }
+        .modal-body pre { background: #2d2d2d; color: #f8f8f2; padding: 15px; border-radius: 5px; overflow-x: auto; margin: 15px 0; }
+        .modal-body pre code { background: transparent; padding: 0; }
+        .modal-body blockquote { border-left: 4px solid #667eea; padding-left: 20px; margin: 20px 0; color: #718096; }
+        .modal-body ul, .modal-body ol { margin-left: 30px; margin-bottom: 15px; }
+        .modal-body li { margin-bottom: 5px; }
+        .modal-body a { color: #667eea; text-decoration: none; }
+        .modal-body a:hover { text-decoration: underline; }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 40px;
+        }
+        
+        .page-btn {
+            padding: 10px 15px;
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .page-btn:hover:not(:disabled) {
+            background: #667eea;
+            color: white;
+        }
+        
+        .page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .page-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .empty-state h2 {
+            color: #4a5568;
+            margin-bottom: 10px;
+        }
+        
+        .empty-state p {
+            color: #718096;
+            margin-bottom: 20px;
+        }
+        
+        .stats-bar {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            color: #718096;
+            font-size: 0.9em;
+        }
+        
+        @media (max-width: 768px) {
+            .posts-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .filter-bar {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .filter-group {
+                width: 100%;
+                flex-direction: column;
+            }
+            
+            .filter-group input,
+            .filter-group select {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <h1>📚 Life Blog Viewer</h1>
+            <div class="nav-buttons">
+                <a href="editor.html" class="btn">✍️ Write New</a>
+                <a href="index.html" class="btn btn-secondary">🏠 Home</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-number" id="totalPosts">0</div>
+                <div class="stat-label">Total Posts</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="thisWeek">0</div>
+                <div class="stat-label">This Week</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="thisMonth">0</div>
+                <div class="stat-label">This Month</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="categories">0</div>
+                <div class="stat-label">Categories</div>
+            </div>
+        </div>
+        
+        <div class="filter-bar">
+            <div class="filter-group">
+                <label>Type:</label>
+                <select id="typeFilter" onchange="filterPosts()">
+                    <option value="all">All Types</option>
+                    <option value="til">TIL</option>
+                    <option value="journal">Daily Journal</option>
+                    <option value="blog">Dev Blog</option>
+                    <option value="100days">100 Days</option>
+                    <option value="learning">Learning Log</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label>Sort:</label>
+                <select id="sortFilter" onchange="filterPosts()">
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="title">By Title</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label>Search:</label>
+                <input type="text" id="searchFilter" placeholder="Search posts..." onkeyup="filterPosts()">
+            </div>
+            
+            <div class="filter-group">
+                <label>Show:</label>
+                <select id="limitFilter" onchange="filterPosts()">
+                    <option value="5">Last 5 Days</option>
+                    <option value="10">Last 10 Days</option>
+                    <option value="30">Last 30 Days</option>
+                    <option value="all">All Time</option>
+                </select>
+            </div>
+        </div>
+        
+        <div id="postsContainer" class="posts-grid">
+            <!-- Posts will be loaded here -->
+        </div>
+        
+        <div class="pagination" id="pagination">
+            <!-- Pagination will be added here -->
+        </div>
+    </div>
+    
+    <!-- Post Modal -->
+    <div id="postModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button class="close-modal" onclick="closeModal()">&times;</button>
+                <h2 id="modalTitle">Post Title</h2>
+                <div id="modalMeta" style="margin-top: 10px; opacity: 0.9;"></div>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Post content will be loaded here -->
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Initialize marked options
+        marked.setOptions({
+            highlight: function(code, lang) {
+                if (lang && hljs.getLanguage(lang)) {
+                    return hljs.highlight(code, { language: lang }).value;
+                }
+                return hljs.highlightAuto(code).value;
+            },
+            breaks: true,
+            gfm: true
+        });
+        
+        // GitHub repository info
+        const REPO_OWNER = 'aniketpr01';
+        const REPO_NAME = 'life';
+        const GITHUB_API = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}`;
+        const GITHUB_RAW = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/main`;
+        
+        let allPosts = [];
+        let filteredPosts = [];
+        let currentPage = 1;
+        const postsPerPage = 9;
+        
+        // Load posts on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadAllPosts();
+            loadLocalPosts();
+        });
+        
+        async function loadAllPosts() {
+            const paths = [
+                'til',
+                'daily-journal',
+                'dev-blog',
+                '100-days-of-code',
+                'learning-log'
+            ];
+            
+            allPosts = [];
+            
+            for (const path of paths) {
+                try {
+                    const response = await fetch(`${GITHUB_API}/contents/${path}?ref=main`, {
+                        headers: {
+                            'Accept': 'application/vnd.github.v3+json'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const files = await response.json();
+                        await processFiles(files, path);
+                    }
+                } catch (error) {
+                    console.error(`Error loading ${path}:`, error);
+                }
+            }
+            
+            // Sort by date (newest first)
+            allPosts.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            // Update stats
+            updateStats();
+            
+            // Initial filter
+            filterPosts();
+        }
+        
+        async function processFiles(files, basePath) {
+            for (const file of files) {
+                if (file.type === 'dir') {
+                    // Recursively process subdirectories
+                    const subResponse = await fetch(file.url, {
+                        headers: {
+                            'Accept': 'application/vnd.github.v3+json'
+                        }
+                    });
+                    if (subResponse.ok) {
+                        const subFiles = await subResponse.json();
+                        await processFiles(subFiles, file.path);
+                    }
+                } else if (file.name.endsWith('.md') && file.name !== 'README.md' && file.name !== 'blog-view.md') {
+                    // Process markdown file
+                    const post = {
+                        name: file.name.replace('.md', '').replace(/-/g, ' '),
+                        path: file.path,
+                        url: file.download_url,
+                        date: extractDateFromPath(file.path) || new Date().toISOString(),
+                        type: getPostType(file.path),
+                        category: getCategoryFromPath(file.path)
+                    };
+                    allPosts.push(post);
+                }
+            }
+        }
+        
+        function loadLocalPosts() {
+            // Load posts from localStorage (created in editor)
+            const localEntries = JSON.parse(localStorage.getItem('journalEntries') || '[]');
+            
+            localEntries.forEach(entry => {
+                const exists = allPosts.some(p => p.path === entry.filename);
+                if (!exists) {
+                    allPosts.push({
+                        name: entry.filename.split('/').pop().replace('.md', '').replace(/-/g, ' '),
+                        path: entry.filename,
+                        content: entry.content,
+                        date: entry.date,
+                        type: entry.type,
+                        category: 'local',
+                        isLocal: true
+                    });
+                }
+            });
+        }
+        
+        function extractDateFromPath(path) {
+            const patterns = [
+                /(\d{4})[/-](\d{2})[/-](\d{2})/,
+                /day-(\d{3})/,
+            ];
+            
+            for (const pattern of patterns) {
+                const match = path.match(pattern);
+                if (match) {
+                    if (pattern.source.includes('day-')) {
+                        const dayNum = parseInt(match[1]);
+                        const baseDate = new Date('2025-01-08');
+                        baseDate.setDate(baseDate.getDate() + dayNum - 1);
+                        return baseDate.toISOString();
+                    } else {
+                        return new Date(`${match[1]}-${match[2]}-${match[3]}`).toISOString();
+                    }
+                }
+            }
+            
+            return new Date().toISOString();
+        }
+        
+        function getPostType(path) {
+            if (path.includes('til')) return 'til';
+            if (path.includes('daily-journal')) return 'journal';
+            if (path.includes('dev-blog')) return 'blog';
+            if (path.includes('100-days')) return '100days';
+            if (path.includes('learning-log')) return 'learning';
+            return 'other';
+        }
+        
+        function getCategoryFromPath(path) {
+            const parts = path.split('/');
+            if (parts.length > 2) {
+                return parts[1];
+            }
+            return 'general';
+        }
+        
+        function filterPosts() {
+            const type = document.getElementById('typeFilter').value;
+            const sort = document.getElementById('sortFilter').value;
+            const search = document.getElementById('searchFilter').value.toLowerCase();
+            const limit = document.getElementById('limitFilter').value;
+            
+            // Filter by type
+            filteredPosts = type === 'all' 
+                ? [...allPosts] 
+                : allPosts.filter(p => p.type === type);
+            
+            // Filter by search
+            if (search) {
+                filteredPosts = filteredPosts.filter(p => 
+                    p.name.toLowerCase().includes(search) ||
+                    p.category.toLowerCase().includes(search)
+                );
+            }
+            
+            // Filter by date limit
+            if (limit !== 'all') {
+                const daysAgo = new Date();
+                daysAgo.setDate(daysAgo.getDate() - parseInt(limit));
+                filteredPosts = filteredPosts.filter(p => new Date(p.date) >= daysAgo);
+            }
+            
+            // Sort
+            switch(sort) {
+                case 'newest':
+                    filteredPosts.sort((a, b) => new Date(b.date) - new Date(a.date));
+                    break;
+                case 'oldest':
+                    filteredPosts.sort((a, b) => new Date(a.date) - new Date(b.date));
+                    break;
+                case 'title':
+                    filteredPosts.sort((a, b) => a.name.localeCompare(b.name));
+                    break;
+            }
+            
+            currentPage = 1;
+            displayPosts();
+        }
+        
+        function displayPosts() {
+            const container = document.getElementById('postsContainer');
+            const startIndex = (currentPage - 1) * postsPerPage;
+            const endIndex = startIndex + postsPerPage;
+            const pagePosts = filteredPosts.slice(startIndex, endIndex);
+            
+            if (pagePosts.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <h2>No posts found</h2>
+                        <p>Try adjusting your filters or create a new post</p>
+                        <a href="editor.html" class="btn">✍️ Write New Post</a>
+                    </div>
+                `;
+                document.getElementById('pagination').innerHTML = '';
+                return;
+            }
+            
+            container.innerHTML = pagePosts.map(post => {
+                const date = new Date(post.date).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+                
+                const typeLabels = {
+                    'til': 'TIL',
+                    'journal': 'Journal',
+                    'blog': 'Blog',
+                    '100days': '100 Days',
+                    'learning': 'Learning'
+                };
+                
+                return `
+                    <div class="post-card" onclick="viewPost('${post.path}')">
+                        <div class="post-header">
+                            <div class="post-type">${typeLabels[post.type] || 'Post'}</div>
+                            <div class="post-title">${post.name}</div>
+                            <div class="post-date">${date}</div>
+                        </div>
+                        <div class="post-content">
+                            <div id="preview-${post.path.replace(/[\/\.]/g, '-')}">
+                                Loading preview...
+                            </div>
+                        </div>
+                        <div class="post-footer">
+                            <div class="post-tags">
+                                <span class="tag">${post.category}</span>
+                                ${post.isLocal ? '<span class="tag">Local</span>' : ''}
+                            </div>
+                            <a href="#" class="read-more" onclick="event.stopPropagation(); viewPost('${post.path}'); return false;">
+                                Read More →
+                            </a>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            // Load previews
+            pagePosts.forEach(post => {
+                loadPreview(post);
+            });
+            
+            // Update pagination
+            updatePagination();
+        }
+        
+        async function loadPreview(post) {
+            const previewId = `preview-${post.path.replace(/[\/\.]/g, '-')}`;
+            const previewDiv = document.getElementById(previewId);
+            
+            if (!previewDiv) return;
+            
+            try {
+                let text = '';
+                
+                if (post.isLocal && post.content) {
+                    text = post.content;
+                } else {
+                    const response = await fetch(post.url);
+                    text = await response.text();
+                }
+                
+                // Extract preview (skip title, get first 200 chars)
+                const lines = text.split('\n');
+                let preview = '';
+                let charCount = 0;
+                
+                for (let i = 0; i < lines.length && charCount < 200; i++) {
+                    const line = lines[i];
+                    if (i === 0 && line.startsWith('#')) continue;
+                    
+                    preview += line + ' ';
+                    charCount += line.length;
+                }
+                
+                preview = preview.trim();
+                if (charCount >= 200) {
+                    preview += '...';
+                }
+                
+                previewDiv.textContent = preview || 'No preview available';
+                
+            } catch (error) {
+                previewDiv.textContent = 'Preview not available';
+            }
+        }
+        
+        async function viewPost(path) {
+            const post = allPosts.find(p => p.path === path);
+            if (!post) return;
+            
+            const modal = document.getElementById('postModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalMeta = document.getElementById('modalMeta');
+            const modalBody = document.getElementById('modalBody');
+            
+            modalTitle.textContent = post.name;
+            modalMeta.innerHTML = `
+                ${new Date(post.date).toLocaleDateString('en-US', { 
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                })} | ${post.type.toUpperCase()} | ${post.category}
+            `;
+            
+            try {
+                let content = '';
+                
+                if (post.isLocal && post.content) {
+                    content = post.content;
+                } else {
+                    const response = await fetch(post.url);
+                    content = await response.text();
+                }
+                
+                const html = marked.parse(content);
+                const cleanHtml = DOMPurify.sanitize(html);
+                modalBody.innerHTML = cleanHtml;
+                
+                // Highlight code blocks
+                modalBody.querySelectorAll('pre code').forEach((block) => {
+                    hljs.highlightElement(block);
+                });
+                
+            } catch (error) {
+                modalBody.innerHTML = '<p>Error loading post content</p>';
+            }
+            
+            modal.style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeModal() {
+            document.getElementById('postModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+        
+        function updatePagination() {
+            const pagination = document.getElementById('pagination');
+            const totalPages = Math.ceil(filteredPosts.length / postsPerPage);
+            
+            if (totalPages <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+            
+            let html = '';
+            
+            // Previous button
+            html += `<button class="page-btn" onclick="changePage(${currentPage - 1})" 
+                     ${currentPage === 1 ? 'disabled' : ''}>← Previous</button>`;
+            
+            // Page numbers
+            for (let i = 1; i <= Math.min(totalPages, 5); i++) {
+                if (i === currentPage) {
+                    html += `<button class="page-btn active">${i}</button>`;
+                } else {
+                    html += `<button class="page-btn" onclick="changePage(${i})">${i}</button>`;
+                }
+            }
+            
+            if (totalPages > 5) {
+                html += `<span style="padding: 10px;">...</span>`;
+                html += `<button class="page-btn" onclick="changePage(${totalPages})">${totalPages}</button>`;
+            }
+            
+            // Next button
+            html += `<button class="page-btn" onclick="changePage(${currentPage + 1})" 
+                     ${currentPage === totalPages ? 'disabled' : ''}>Next →</button>`;
+            
+            pagination.innerHTML = html;
+        }
+        
+        function changePage(page) {
+            const totalPages = Math.ceil(filteredPosts.length / postsPerPage);
+            if (page < 1 || page > totalPages) return;
+            
+            currentPage = page;
+            displayPosts();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        
+        function updateStats() {
+            // Total posts
+            document.getElementById('totalPosts').textContent = allPosts.length;
+            
+            // This week
+            const weekAgo = new Date();
+            weekAgo.setDate(weekAgo.getDate() - 7);
+            const thisWeek = allPosts.filter(p => new Date(p.date) >= weekAgo).length;
+            document.getElementById('thisWeek').textContent = thisWeek;
+            
+            // This month
+            const monthAgo = new Date();
+            monthAgo.setMonth(monthAgo.getMonth() - 1);
+            const thisMonth = allPosts.filter(p => new Date(p.date) >= monthAgo).length;
+            document.getElementById('thisMonth').textContent = thisMonth;
+            
+            // Categories
+            const categories = new Set(allPosts.map(p => p.category));
+            document.getElementById('categories').textContent = categories.size;
+        }
+        
+        // Close modal on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+        
+        // Close modal on outside click
+        document.getElementById('postModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('postModal')) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>
