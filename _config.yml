@@ -1,0 +1,47 @@
+theme: jekyll-theme-minimal
+title: Life - Personal Knowledge Repository
+description: A collection of daily learnings, thoughts, and technical discoveries
+show_downloads: false
+google_analytics:
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+
+# Exclude files from processing
+exclude:
+  - scripts/
+  - resources/templates.md
+  - README.md
+
+# Collections
+collections:
+  til:
+    output: true
+    permalink: /til/:path/
+  journal:
+    output: true
+    permalink: /journal/:path/
+  blog:
+    output: true
+    permalink: /blog/:path/
+
+# Defaults
+defaults:
+  - scope:
+      path: ""
+      type: "posts"
+    values:
+      layout: "post"
+  - scope:
+      path: "til"
+    values:
+      layout: "default"
+  - scope:
+      path: "daily-journal"
+    values:
+      layout: "default"
+  - scope:
+      path: "dev-blog"
+    values:
+      layout: "default"
