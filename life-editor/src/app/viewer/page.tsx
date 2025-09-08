@@ -41,6 +41,7 @@ interface ViewerState {
   postsPerPage: number;
   selectedPost: BlogPost | null;
   showModal: boolean;
+  isFullscreen: boolean;
 }
 
 export default function ViewerPage() {
@@ -56,6 +57,7 @@ export default function ViewerPage() {
     postsPerPage: 9,
     selectedPost: null,
     showModal: false,
+    isFullscreen: false,
   });
 
   useEffect(() => {
@@ -282,11 +284,15 @@ export default function ViewerPage() {
   };
 
   const openPost = (post: BlogPost) => {
-    setState(prev => ({ ...prev, selectedPost: post, showModal: true }));
+    setState(prev => ({ ...prev, selectedPost: post, showModal: true, isFullscreen: false }));
   };
 
   const closeModal = () => {
-    setState(prev => ({ ...prev, selectedPost: null, showModal: false }));
+    setState(prev => ({ ...prev, selectedPost: null, showModal: false, isFullscreen: false }));
+  };
+
+  const toggleFullscreen = () => {
+    setState(prev => ({ ...prev, isFullscreen: !prev.isFullscreen }));
   };
 
   const getPostTypeLabel = (type: BlogPost['type']) => {
@@ -546,8 +552,8 @@ export default function ViewerPage() {
 
       {/* Post Modal */}
       {state.showModal && state.selectedPost && (
-        <div className="dimmed-modal fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-          <div className="modal-container rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+        <div className={`dimmed-modal fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 ${state.isFullscreen ? 'p-0' : 'p-4'}`}>
+          <div className={`modal-container rounded-lg ${state.isFullscreen ? 'w-full h-full max-w-none max-h-none' : 'max-w-4xl w-full max-h-[90vh]'} overflow-hidden`}>
             <div className="modal-header flex items-center justify-between p-6 border-b">
               <div className="flex items-center space-x-3">
                 <span className={`px-2 py-1 text-xs font-medium rounded-full ${getPostTypeColor(state.selectedPost.type)}`}>
@@ -557,16 +563,33 @@ export default function ViewerPage() {
                   {state.selectedPost.title}
                 </h2>
               </div>
-              <button
-                onClick={closeModal}
-                className="close-btn p-2"
-              >
-                <X className="h-5 w-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={toggleFullscreen}
+                  className="fullscreen-btn p-2 rounded-md hover:bg-gray-600 transition-colors"
+                  title={state.isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+                >
+                  {state.isFullscreen ? (
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  ) : (
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                    </svg>
+                  )}
+                </button>
+                <button
+                  onClick={closeModal}
+                  className="close-btn p-2"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
             
-            <div className="modal-content p-6 overflow-y-auto max-h-[70vh]">
-              <div className="dimmed-prose max-w-none">
+            <div className={`modal-content overflow-y-auto ${state.isFullscreen ? 'h-[calc(100vh-140px)] p-8' : 'max-h-[70vh] p-6'}`}>
+              <div className={`dimmed-prose ${state.isFullscreen ? 'fullscreen-prose max-w-4xl mx-auto' : 'max-w-none'}`}>
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm, remarkBreaks]}
                   rehypePlugins={[rehypeHighlight, rehypeRaw]}
@@ -610,8 +633,30 @@ export default function ViewerPage() {
         </div>
       )}
       
+      {/* Keyboard shortcuts for fullscreen */}
+      {state.showModal && (
+        <div
+          onKeyDown={(e) => {
+            if (e.key === 'f' || e.key === 'F') {
+              e.preventDefault();
+              toggleFullscreen();
+            }
+            if (e.key === 'Escape') {
+              if (state.isFullscreen) {
+                setState(prev => ({ ...prev, isFullscreen: false }));
+              } else {
+                closeModal();
+              }
+            }
+          }}
+          tabIndex={-1}
+          className="fixed inset-0 pointer-events-none"
+        />
+      )}
+      
       <style jsx>{`
-        .dimmed-modal .modal-container { background: #22272e; border: 1px solid #373e47; color: #adbac7; }
+        .dimmed-modal .modal-container { background: #22272e; border: 1px solid #373e47; color: #adbac7; transition: all 0.3s ease; }
+        .dimmed-modal .modal-container.fullscreen { border-radius: 0; }
         .dimmed-modal .modal-header { background: #22272e; border-color: #373e47; }
         .dimmed-modal .modal-title { color: #cdd9e5; }
         .dimmed-modal .close-btn { color: #768390; }
@@ -635,6 +680,19 @@ export default function ViewerPage() {
         .dimmed-prose th { background: #2d333b; color: #cdd9e5; }
         .dimmed-prose tbody tr:nth-child(odd) { background: #242b33; }
         .dimmed-prose img { max-width: 100%; border-radius: 6px; border: 1px solid #373e47; }
+        
+        /* Fullscreen specific styling */
+        .fullscreen-prose h1 { font-size: 2.5rem; margin: 32px 0 24px 0; }
+        .fullscreen-prose h2 { font-size: 2rem; margin: 28px 0 20px 0; }
+        .fullscreen-prose h3 { font-size: 1.5rem; margin: 24px 0 16px 0; }
+        .fullscreen-prose p { font-size: 1.1rem; line-height: 1.8; margin: 20px 0; }
+        .fullscreen-prose li { font-size: 1.1rem; line-height: 1.8; margin: 8px 0; }
+        .fullscreen-prose pre { font-size: 14px; padding: 24px; margin: 24px 0; }
+        .fullscreen-prose code { font-size: 0.95rem; }
+        .fullscreen-prose blockquote { font-size: 1.1rem; padding: 20px; margin: 24px 0; }
+        
+        .fullscreen-btn { color: #768390; }
+        .fullscreen-btn:hover { color: #cdd9e5; background: #2d333b; }
       `}</style>
     </div>
   );
