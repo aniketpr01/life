@@ -8,6 +8,9 @@ on:
     - cron: '0 0 * * *'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   generate-blog:
     runs-on: ubuntu-latest
@@ -28,7 +31,7 @@ jobs:
     
     - name: Commit and Push if changed
       run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
+        git config --local user.email "anikethprajapati@gmail.com"
+        git config --local user.name "Aniket P"
         git add blog-view.md
         git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-update: Generate blog view [skip ci]" && git push)
