@@ -21,74 +21,92 @@ import MermaidDiagram from '@/components/MermaidDiagram';
 import SyntaxHighlightedEditor from '@/components/SyntaxHighlightedEditor';
 
 const templates = {
-  til: `# [Topic Title]
+  til: `# What I Learned Today
 
-[Brief description of what you learned]
+Brief description of your discovery or learning...
+
+## Example
 
 \`\`\`javascript
-// Code example if applicable
+// Add a code example if relevant
+const example = "Your code here";
 \`\`\`
 
-**Key Learning:** [Main takeaway]
+**Key Takeaway:** What's the main insight?
 
-*Date: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}*
-*Tags: #tag1 #tag2*`,
+**Date:** ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+**Tags:** #learning #technology`,
   
-  journal: `# ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} - [Title]
+  journal: `# ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} - Daily Reflection
 
 ## 🎯 Today's Goals
-- [ ] Goal 1
-- [ ] Goal 2
-- [ ] Goal 3
+- [ ] What did I want to accomplish today?
+- [ ] Any specific targets or milestones?
+- [ ] Personal or work objectives?
 
-## 💭 Thoughts
-[Your thoughts for the day]
+## 💭 Thoughts & Reflections
+How am I feeling today? What's on my mind?
 
-## 🚀 What I Accomplished
-- Item 1
-- Item 2
+## 🚀 What I Accomplished  
+- What did I actually get done today?
+- Any wins, big or small?
+- Progress on ongoing projects?
 
 ## 📚 What I Learned
-- Learning 1
-- Learning 2
+- New insights or knowledge gained
+- Skills practiced or improved
+- Interesting discoveries
 
 ## 🔮 Tomorrow's Focus
-- Task 1
-- Task 2
+- What are my priorities for tomorrow?
+- Any preparation needed?
 
 ## 🙏 Gratitude
-[What you're grateful for]
+What am I thankful for today?
 
 ---
-
-*Mood: [Your mood]*
-*Weather: [Weather]*`,
+**Mood:** How are you feeling?
+**Weather:** What's it like outside?
+**Tags:** #journal #daily #reflection`,
   
-  blog: `# [Blog Title]
+  blog: `# Your Blog Post Title
 
-*Published: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} | [X] min read*
+*Published: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} | Estimated read time: 5 min*
 
 ## Introduction
-[Hook and introduction]
 
-## [Main Section 1]
-[Content]
+Start with a compelling hook. What problem are you solving or what insight are you sharing?
 
-### [Subsection]
-[Content]
+## Main Content
+
+### Section 1
+Explain your main points here...
+
+### Section 2  
+Add more details, examples, or explanations...
+
+### Code Example (if applicable)
 
 \`\`\`javascript
-// Code examples
+// Provide practical examples
+const example = {
+  concept: "Show don't just tell",
+  implementation: "Working code examples"
+};
 \`\`\`
 
-## Best Practices
-1. **Practice 1**: Description
-2. **Practice 2**: Description
+## Key Takeaways
+
+1. **Main Point 1:** What's the key insight?
+2. **Main Point 2:** What should readers remember?
+3. **Main Point 3:** What's the actionable advice?
 
 ## Conclusion
-[Wrap up and key takeaways]
 
-**Tags:** #tag1 #tag2 #tag3`,
+Wrap up your thoughts and provide next steps or further reading.
+
+---
+**Tags:** #blog #tutorial #development`,
   
   '100days': `# Day [X] - [Topic/Project Name]
 
@@ -187,6 +205,9 @@ export default function EditorPage() {
     const savedContent = localStorage.getItem('hackmd-content');
     if (savedContent) {
       setContent(savedContent);
+    } else {
+      // Load default TIL template on first visit
+      setContent(templates.til);
     }
   }, []);
 
@@ -328,6 +349,27 @@ export default function EditorPage() {
     setContent(templates[type]);
     setPostType(type);
     setShowTemplates(false);
+    localStorage.setItem('hackmd-content', templates[type]);
+  };
+
+  // Auto-load template when dropdown changes
+  const handleTypeChange = (newType: BlogPost['type']) => {
+    if (newType !== postType) {
+      // Only load template if current content is empty or ask user
+      if (!content.trim()) {
+        setContent(templates[newType]);
+        localStorage.setItem('hackmd-content', templates[newType]);
+      } else {
+        const shouldLoadTemplate = window.confirm(
+          `Switch to ${newType.toUpperCase()} template? This will replace your current content.`
+        );
+        if (shouldLoadTemplate) {
+          setContent(templates[newType]);
+          localStorage.setItem('hackmd-content', templates[newType]);
+        }
+      }
+    }
+    setPostType(newType);
   };
 
   const downloadFile = () => {
@@ -393,7 +435,7 @@ export default function EditorPage() {
         <div className="template-bar">
           <select 
             value={postType}
-            onChange={(e) => setPostType(e.target.value as BlogPost['type'])}
+            onChange={(e) => handleTypeChange(e.target.value as BlogPost['type'])}
             className="template-select"
           >
             <option value="til">💡 TIL</option>
@@ -425,6 +467,20 @@ export default function EditorPage() {
             placeholder="Title"
             className="title-input"
           />
+          
+          <button 
+            onClick={() => {
+              if (window.confirm('Clear editor and start fresh?')) {
+                setContent('');
+                setTitle('');
+                setCategory('');
+                localStorage.removeItem('hackmd-content');
+              }
+            }}
+            className="clear-btn"
+          >
+            🗑️ Clear
+          </button>
           
           <Link href="/viewer" className="view-posts-btn">
             📚 View Posts
@@ -836,7 +892,7 @@ export default function EditorPage() {
           font-size: 13px;
         }
 
-        .template-btn, .view-posts-btn {
+        .template-btn, .view-posts-btn, .clear-btn {
           padding: 4px 8px;
           background: #316dca;
           color: #cdd9e5;
@@ -846,6 +902,14 @@ export default function EditorPage() {
           cursor: pointer;
           text-decoration: none;
           display: inline-block;
+        }
+
+        .clear-btn {
+          background: #dc3545;
+        }
+
+        .clear-btn:hover {
+          background: #c82333;
         }
 
         .template-popup {
