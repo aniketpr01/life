@@ -332,25 +332,49 @@ export default function EditorPage() {
       let message = '';
       
       if (existingFile && isDaily && !window.location.search.includes('edit=')) {
-        // This is a daily file - append with timestamp
-        const currentTime = new Date().toLocaleTimeString('en-US', { 
-          hour12: false, 
-          hour: '2-digit', 
-          minute: '2-digit' 
+        // This is a daily file - ALWAYS APPEND, never overwrite
+        const now = new Date();
+        
+        // Convert to IST (UTC+5:30)
+        const istTime = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
+        const currentTimeIST = istTime.toLocaleTimeString('en-US', { 
+          hour12: true, 
+          hour: 'numeric', 
+          minute: '2-digit',
+          timeZone: 'Asia/Kolkata'
         });
         
-        const existingContent = atob(existingFile.content || '');
+        const existingContent = atob(existingFile.content.replace(/\s/g, '') || '');
+        
+        // Always append - never overwrite existing content
         finalContent = existingContent + 
-                      '\n\n---\n' + 
-                      `**${currentTime}**\n\n` + 
+                      '\n\n---\n\n' + 
+                      `## ${currentTimeIST}\n\n` + 
                       content;
         
-        message = `Update daily notes - ${currentTime}`;
+        message = `Add daily entry - ${currentTimeIST}`;
         
-        setSaveStatus('saved');
-        // Don't ask to clear for daily updates, just clear editor
-        setContent('');
-        localStorage.removeItem('hackmd-content');
+        // Execute the append immediately
+        const result = await githubService.current.createOrUpdateFile(
+          filename,
+          finalContent,
+          message,
+          existingFile.sha
+        );
+
+        if (result.success) {
+          setSaveStatus('saved');
+          // Auto-clear for next entry
+          setContent('');
+          localStorage.removeItem('hackmd-content');
+          setTimeout(() => setSaveStatus('idle'), 2000);
+        } else {
+          setSaveStatus('error');
+          alert('Error appending to daily file: ' + result.error);
+        }
+        
+        setSaving(false);
+        return; // Exit early for daily append
         
       } else if (existingFile && !window.location.search.includes('edit=')) {
         // Regular file exists, ask user what to do
@@ -581,7 +605,14 @@ export default function EditorPage() {
           <div className="status-indicators">
             <span className="filename-display">📁 {filename}</span>
             {!title.trim() && (
-              <span className="daily-indicator">📅 Daily Entry - Will append if file exists</span>
+              <span className="daily-indicator">
+                📅 Daily Entry - Will append to today's file at {new Date().toLocaleTimeString('en-US', { 
+                  hour12: true, 
+                  hour: 'numeric', 
+                  minute: '2-digit',
+                  timeZone: 'Asia/Kolkata'
+                })} IST
+              </span>
             )}
             {saveStatus === 'saved' && <span className="save-indicator saved">✅ Saved!</span>}
             {saveStatus === 'error' && <span className="save-indicator error">❌ Error</span>}
