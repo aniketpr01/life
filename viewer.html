@@ -404,6 +404,7 @@
         <div class="header-content">
             <h1>📚 Life Blog Viewer</h1>
             <div class="nav-buttons">
+                <button class="btn" onclick="refreshFromGitHub()">🔄 Refresh</button>
                 <a href="editor.html" class="btn">✍️ Write New</a>
                 <a href="index.html" class="btn btn-secondary">🏠 Home</a>
             </div>
@@ -519,9 +520,25 @@
         window.addEventListener('DOMContentLoaded', () => {
             loadAllPosts();
             loadLocalPosts();
+            
+            // Check for type filter from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const typeFilter = urlParams.get('type');
+            if (typeFilter) {
+                document.getElementById('typeFilter').value = typeFilter;
+            }
         });
         
-        async function loadAllPosts() {
+        async function loadAllPosts(showLoading = true) {
+            if (showLoading) {
+                document.getElementById('postsContainer').innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 60px;">
+                        <div style="font-size: 2em; margin-bottom: 20px;">🔄</div>
+                        <div>Loading posts from GitHub...</div>
+                    </div>
+                `;
+            }
+            
             const paths = [
                 'til',
                 'daily-journal',
@@ -532,17 +549,28 @@
             
             allPosts = [];
             
+            // Check if we have a token for authenticated requests (higher rate limits)
+            const token = localStorage.getItem('githubToken');
+            const headers = {
+                'Accept': 'application/vnd.github.v3+json'
+            };
+            if (token) {
+                headers['Authorization'] = `token ${token}`;
+            }
+            
             for (const path of paths) {
                 try {
                     const response = await fetch(`${GITHUB_API}/contents/${path}?ref=main`, {
-                        headers: {
-                            'Accept': 'application/vnd.github.v3+json'
-                        }
+                        headers: headers
                     });
                     
                     if (response.ok) {
                         const files = await response.json();
                         await processFiles(files, path);
+                    } else if (response.status === 404) {
+                        console.log(`Path ${path} not found, skipping...`);
+                    } else {
+                        console.error(`Error loading ${path}:`, response.status, response.statusText);
                     }
                 } catch (error) {
                     console.error(`Error loading ${path}:`, error);
@@ -557,6 +585,35 @@
             
             // Initial filter
             filterPosts();
+        }
+        
+        async function refreshFromGitHub() {
+            const refreshBtn = document.querySelector('button[onclick="refreshFromGitHub()"]');
+            const originalText = refreshBtn.innerHTML;
+            
+            refreshBtn.innerHTML = '⏳ Refreshing...';
+            refreshBtn.disabled = true;
+            
+            try {
+                // Clear cache and reload
+                allPosts = [];
+                await loadAllPosts(true);
+                
+                // Show success message briefly
+                refreshBtn.innerHTML = '✅ Updated!';
+                setTimeout(() => {
+                    refreshBtn.innerHTML = originalText;
+                    refreshBtn.disabled = false;
+                }, 2000);
+                
+            } catch (error) {
+                console.error('Refresh failed:', error);
+                refreshBtn.innerHTML = '❌ Failed';
+                setTimeout(() => {
+                    refreshBtn.innerHTML = originalText;
+                    refreshBtn.disabled = false;
+                }, 2000);
+            }
         }
         
         async function processFiles(files, basePath) {

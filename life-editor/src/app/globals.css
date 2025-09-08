@@ -1,0 +1,148 @@
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400;1,600&family=Source+Serif+Pro:ital,wght@0,400;0,600;1,400;1,600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* 80% Dark Theme - Not Full Black */
+  --background: #1a1f2e;
+  --foreground: #e8eaed;
+  --surface: #242b3d;
+  --surface-light: #2d3548;
+  --border: #3d4759;
+  --text-primary: #e8eaed;
+  --text-secondary: #b8bcc5;
+  --text-muted: #8a8f98;
+  --accent: #6366f1;
+  --accent-light: #818cf8;
+}
+
+/* Default body - let individual pages override */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Only apply custom theme to non-editor pages */
+.page-home {
+  background: var(--background) !important;
+  color: var(--text-primary) !important;
+  font-family: 'Crimson Text', serif !important;
+}
+
+.page-viewer {
+  background: var(--background) !important; 
+  color: var(--text-primary) !important;
+  font-family: 'Crimson Text', serif !important;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* COMPLETELY HIDE ALL ERROR OVERLAYS */
+[data-nextjs-dialog-overlay],
+[data-nextjs-toast],
+[data-nextjs-dialog],
+[data-nextjs-errors-overlay],
+[data-nextjs-errors-dialog],
+#__next-build-watcher,
+.next-error-h1,
+.next-error-desc,
+div[style*="position: fixed"][style*="z-index: 9999"],
+div[style*="position: fixed"][style*="background: rgb(17, 17, 17)"],
+div[style*="position: fixed"][style*="background: rgb(24, 24, 24)"],
+div[style*="position: fixed"][style*="background: rgba(17, 17, 17"],
+body > div[style*="position: fixed"][style*="inset: 0"],
+#webpack-dev-server-client-overlay,
+#webpack-hot-middleware-clientOverlay {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  position: absolute !important;
+  top: -9999px !important;
+  left: -9999px !important;
+  width: 0 !important;
+  height: 0 !important;
+  z-index: -1 !important;
+}
+
+/* Hide any overlay that contains MetaMask or error text */
+div:has(*):not([class]):not([id]) {
+  &:has(div[style*="position: fixed"]) {
+    display: none !important;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100 dark:bg-gray-800;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-400 dark:bg-gray-600 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-500 dark:bg-gray-500;
+}
+
+/* Split pane styles */
+.split-pane {
+  position: relative !important;
+}
+
+.resizer {
+  background: #000;
+  opacity: 0.2;
+  z-index: 1;
+  box-sizing: border-box;
+  background-clip: padding-box;
+}
+
+.resizer:hover {
+  transition: all 2s ease;
+}
+
+.resizer.horizontal {
+  height: 11px;
+  margin: -5px 0;
+  border-top: 5px solid rgba(255, 255, 255, 0);
+  border-bottom: 5px solid rgba(255, 255, 255, 0);
+  cursor: row-resize;
+  width: 100%;
+}
+
+.resizer.horizontal:hover {
+  border-top: 5px solid rgba(0, 0, 0, 0.5);
+  border-bottom: 5px solid rgba(0, 0, 0, 0.5);
+}
+
+.resizer.vertical {
+  width: 11px;
+  margin: 0 -5px;
+  border-left: 5px solid rgba(255, 255, 255, 0);
+  border-right: 5px solid rgba(255, 255, 255, 0);
+  cursor: col-resize;
+}
+
+.resizer.vertical:hover {
+  border-left: 5px solid rgba(0, 0, 0, 0.5);
+  border-right: 5px solid rgba(0, 0, 0, 0.5);
+}
+
+.resizer.disabled {
+  cursor: not-allowed;
+}
+
+.resizer.disabled:hover {
+  border-color: transparent;
+}
