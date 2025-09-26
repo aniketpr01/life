@@ -2,7 +2,7 @@
 > Showing entries from the last 5 days per page
 
 ## Page 1
-### 📅 Thursday, September 25, 2025
+### 📅 Friday, September 26, 2025
 #### 💡 New Entry
 *Type: TIL | [View Full Entry](til/general/new-entry.md)*
 
@@ -71,17 +71,17 @@ Python 3.8 introduced the walrus operator (`:=`) for assignment expressions. It 
 
 *[Code example included in full entry...]*
 
-#### 💡 Recovering a Lost Commit in Git
-*Type: TIL | [View Full Entry](til/git/recovering-lost-commit.md)*
-
-If you accidentally lose a commit (maybe through a bad rebase or reset), you can often recover it using `git reflog`.
-
-*[Code example included in full entry...]*
-
 #### 💡 Optional Chaining in JavaScript
 *Type: TIL | [View Full Entry](til/javascript/optional-chaining.md)*
 
 Optional chaining (`?.`) allows you to safely access nested object properties, even if an intermediate property doesn't exist.
+
+*[Code example included in full entry...]*
+
+#### 💡 Recovering a Lost Commit in Git
+*Type: TIL | [View Full Entry](til/git/recovering-lost-commit.md)*
+
+If you accidentally lose a commit (maybe through a bad rebase or reset), you can often recover it using `git reflog`.
 
 *[Code example included in full entry...]*
 
@@ -141,5 +141,5 @@ Starting this 100 Days of Code challenge feels both exciting and daunting. Today
 ---
 
 
-*Generated on September 25, 2025 at 12:13 AM*
+*Generated on September 26, 2025 at 12:13 AM*
 *Total Entries: 10*
