@@ -381,29 +381,32 @@ export default function EditorPage() {
         }
       } else {
         // New file or editing mode
-        message = `${existingFile ? 'Update' : 'Add'} ${filename.split('/').pop()}`;
-      }
+        const message = `${existingFile ? 'Update' : 'Add'} ${filename.split('/').pop()}`;
+        const isDaily = !title.trim() && filename.includes(new Date().getDate().toString().padStart(2, '0') + 
+                       (new Date().getMonth() + 1).toString().padStart(2, '0') + 
+                       new Date().getFullYear().toString().slice(-2));
       
-      const result = await githubService.current.createOrUpdateFile(
-        filename,
-        finalContent,
-        message,
-        existingFile?.sha
-      );
+        const result = await githubService.current.createOrUpdateFile(
+          filename,
+          content,
+          message,
+          existingFile?.sha
+        );
 
-      if (result.success && !isDaily) {
-        setSaveStatus('saved');
-        if (window.confirm('Post saved to GitHub! Clear editor for new post?')) {
-          setContent('');
-          setTitle('');
-          setCategory('');
-          localStorage.removeItem('hackmd-content');
-          // Clear URL params
-          window.history.replaceState({}, '', '/editor');
-        }
-      } else if (!result.success) {
-        setSaveStatus('error');
-        alert('Error saving to GitHub: ' + result.error);
+          if (result.success && !isDaily) {
+            setSaveStatus('saved');
+            if (window.confirm('Post saved to GitHub! Clear editor for new post?')) {
+              setContent('');
+              setTitle('');
+              setCategory('');
+              localStorage.removeItem('hackmd-content');
+              // Clear URL params
+              window.history.replaceState({}, '', '/editor');
+            }
+          } else if (!result.success) {
+            setSaveStatus('error');
+            alert('Error saving to GitHub: ' + result.error);
+          }
       }
       
     } catch (error) {
@@ -1481,9 +1484,9 @@ export default function EditorPage() {
           font-size: 13px;
           line-height: 22px;
           resize: none;
-          white-space: pre;
-          word-wrap: normal;
-          overflow-wrap: normal;
+          white-space: pre-wrap;
+          word-wrap: break-word;
+          overflow-wrap: break-word;
           tab-size: 4;
         }
 
