@@ -2,22 +2,13 @@
 > Showing entries from the last 5 days per page
 
 ## Page 1
-### 📅 Tuesday, January 13, 2026
+### 📅 Wednesday, January 14, 2026
 #### 💡 New Entry
 *Type: TIL | [View Full Entry](til/general/new-entry.md)*
 
 Testing it again
 
 lets test this again
-
-#### 📔 19
-*Type: Journal | [View Full Entry](daily-journal/2025/nov/19.md)*
-
-Ok so here is what I am going to do: 
-
-I'm just miserable right now. There is nothing to do in life. My life has become so hollow and so boring. There is nothing happening other than misery. Like no friends, no family support, no financial support, no mental support, no health support. There is nothing. Just one silver lining is there in everything which holds me as my daughter who is very much happy. Only if I can make her life better that's the only goal but I'm failing it at a big time
-
-From... *[Continue reading →]*
 
 #### 📚 Full Stack Web Development Learning Journey
 *Type: Learning | [View Full Entry](learning-log/fullstack-webdev.md)*
@@ -44,6 +35,15 @@ From... *[Continue reading →]*
 - [ ] React Router
 - [ ] Context API
 - [... *[Continue reading →]*
+
+#### 📔 19
+*Type: Journal | [View Full Entry](daily-journal/2025/nov/19.md)*
+
+Ok so here is what I am going to do: 
+
+I'm just miserable right now. There is nothing to do in life. My life has become so hollow and so boring. There is nothing happening other than misery. Like no friends, no family support, no financial support, no mental support, no health support. There is nothing. Just one silver lining is there in everything which holds me as my daughter who is very much happy. Only if I can make her life better that's the only goal but I'm failing it at a big time
+
+From... *[Continue reading →]*
 
 ---
 
@@ -150,5 +150,5 @@ Starting this 100 Days of Code challenge feels both exciting and daunting. Today
 ---
 
 
-*Generated on January 13, 2026 at 12:12 AM*
+*Generated on January 14, 2026 at 12:15 AM*
 *Total Entries: 11*
