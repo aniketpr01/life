@@ -2,7 +2,7 @@
 > Showing entries from the last 5 days per page
 
 ## Page 1
-### 📅 Thursday, April 09, 2026
+### 📅 Friday, April 10, 2026
 #### 💡 New Entry
 *Type: TIL | [View Full Entry](til/general/new-entry.md)*
 
@@ -73,10 +73,10 @@ It provides a trustless signing service where signatures are generated inside TE
 ---
 
 ### 📅 Wednesday, January 08, 2025
-#### 💡 Recovering a Lost Commit in Git
-*Type: TIL | [View Full Entry](til/git/recovering-lost-commit.md)*
+#### 💡 Optional Chaining in JavaScript
+*Type: TIL | [View Full Entry](til/javascript/optional-chaining.md)*
 
-If you accidentally lose a commit (maybe through a bad rebase or reset), you can often recover it using `git reflog`.
+Optional chaining (`?.`) allows you to safely access nested object properties, even if an intermediate property doesn't exist.
 
 *[Code example included in full entry...]*
 
@@ -87,10 +87,10 @@ Python 3.8 introduced the walrus operator (`:=`) for assignment expressions. It 
 
 *[Code example included in full entry...]*
 
-#### 💡 Optional Chaining in JavaScript
-*Type: TIL | [View Full Entry](til/javascript/optional-chaining.md)*
+#### 💡 Recovering a Lost Commit in Git
+*Type: TIL | [View Full Entry](til/git/recovering-lost-commit.md)*
 
-Optional chaining (`?.`) allows you to safely access nested object properties, even if an intermediate property doesn't exist.
+If you accidentally lose a commit (maybe through a bad rebase or reset), you can often recover it using `git reflog`.
 
 *[Code example included in full entry...]*
 
@@ -150,5 +150,5 @@ Starting this 100 Days of Code challenge feels both exciting and daunting. Today
 ---
 
 
-*Generated on April 09, 2026 at 12:19 AM*
+*Generated on April 10, 2026 at 12:22 AM*
 *Total Entries: 11*
