@@ -2,7 +2,7 @@
 > Showing entries from the last 5 days per page
 
 ## Page 1
-### 📅 Thursday, April 23, 2026
+### 📅 Friday, April 24, 2026
 #### 💡 New Entry
 *Type: TIL | [View Full Entry](til/general/new-entry.md)*
 
@@ -48,15 +48,6 @@ From... *[Continue reading →]*
 ---
 
 ### 📅 Monday, September 08, 2025
-#### 📝 Marlin Signature and Verification
-*Type: Blog | [View Full Entry](dev-blog/2025-09-08-post.md)*
-
-It provides a trustless signing service where signatures are generated inside TEEs using deterministically derived secp256k1 keys. These signatures can be verified on-chain without exposing private keys, ensuring complete transparency and security
-### Core Components
-
-1. **Signing Server** - HTTP service running inside Oyster CVM enclave that signs payloads using KMS-derived secp256k1 keys
-2. **Nautilus KMS Integration** - Local derive server providing deterministic key derivation based on encla... *[Continue reading →]*
-
 #### 📝 Test Blog Post
 *Type: Blog | [View Full Entry](dev-blog/2025-09-08-test-workflow.md)*
 
@@ -70,9 +61,25 @@ This is a test blog post created to verify the editor → GitHub → viewer work
 
 *[Code example included in full entry...]*
 
+#### 📝 Marlin Signature and Verification
+*Type: Blog | [View Full Entry](dev-blog/2025-09-08-post.md)*
+
+It provides a trustless signing service where signatures are generated inside TEEs using deterministically derived secp256k1 keys. These signatures can be verified on-chain without exposing private keys, ensuring complete transparency and security
+### Core Components
+
+1. **Signing Server** - HTTP service running inside Oyster CVM enclave that signs payloads using KMS-derived secp256k1 keys
+2. **Nautilus KMS Integration** - Local derive server providing deterministic key derivation based on encla... *[Continue reading →]*
+
 ---
 
 ### 📅 Wednesday, January 08, 2025
+#### 💡 Optional Chaining in JavaScript
+*Type: TIL | [View Full Entry](til/javascript/optional-chaining.md)*
+
+Optional chaining (`?.`) allows you to safely access nested object properties, even if an intermediate property doesn't exist.
+
+*[Code example included in full entry...]*
+
 #### 💡 The Walrus Operator in Python
 *Type: TIL | [View Full Entry](til/python/walrus-operator.md)*
 
@@ -84,13 +91,6 @@ Python 3.8 introduced the walrus operator (`:=`) for assignment expressions. It 
 *Type: TIL | [View Full Entry](til/git/recovering-lost-commit.md)*
 
 If you accidentally lose a commit (maybe through a bad rebase or reset), you can often recover it using `git reflog`.
-
-*[Code example included in full entry...]*
-
-#### 💡 Optional Chaining in JavaScript
-*Type: TIL | [View Full Entry](til/javascript/optional-chaining.md)*
-
-Optional chaining (`?.`) allows you to safely access nested object properties, even if an intermediate property doesn't exist.
 
 *[Code example included in full entry...]*
 
@@ -150,5 +150,5 @@ Starting this 100 Days of Code challenge feels both exciting and daunting. Today
 ---
 
 
-*Generated on April 23, 2026 at 12:29 AM*
+*Generated on April 24, 2026 at 12:29 AM*
 *Total Entries: 11*
