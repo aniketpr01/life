@@ -2,7 +2,7 @@
 > Showing entries from the last 5 days per page
 
 ## Page 1
-### 📅 Wednesday, September 23, 2026
+### 📅 Thursday, September 24, 2026
 #### 💡 New Entry
 *Type: TIL | [View Full Entry](til/general/new-entry.md)*
 
@@ -48,6 +48,15 @@ From... *[Continue reading →]*
 ---
 
 ### 📅 Monday, September 08, 2025
+#### 📝 Marlin Signature and Verification
+*Type: Blog | [View Full Entry](dev-blog/2025-09-08-post.md)*
+
+It provides a trustless signing service where signatures are generated inside TEEs using deterministically derived secp256k1 keys. These signatures can be verified on-chain without exposing private keys, ensuring complete transparency and security
+### Core Components
+
+1. **Signing Server** - HTTP service running inside Oyster CVM enclave that signs payloads using KMS-derived secp256k1 keys
+2. **Nautilus KMS Integration** - Local derive server providing deterministic key derivation based on encla... *[Continue reading →]*
+
 #### 📝 Test Blog Post
 *Type: Blog | [View Full Entry](dev-blog/2025-09-08-test-workflow.md)*
 
@@ -60,15 +69,6 @@ This is a test blog post created to verify the editor → GitHub → viewer work
 - **Mermaid Support**: Do diagrams render properly?
 
 *[Code example included in full entry...]*
-
-#### 📝 Marlin Signature and Verification
-*Type: Blog | [View Full Entry](dev-blog/2025-09-08-post.md)*
-
-It provides a trustless signing service where signatures are generated inside TEEs using deterministically derived secp256k1 keys. These signatures can be verified on-chain without exposing private keys, ensuring complete transparency and security
-### Core Components
-
-1. **Signing Server** - HTTP service running inside Oyster CVM enclave that signs payloads using KMS-derived secp256k1 keys
-2. **Nautilus KMS Integration** - Local derive server providing deterministic key derivation based on encla... *[Continue reading →]*
 
 ---
 
@@ -150,5 +150,5 @@ Starting this 100 Days of Code challenge feels both exciting and daunting. Today
 ---
 
 
-*Generated on September 23, 2026 at 02:53 AM*
+*Generated on September 24, 2026 at 02:43 AM*
 *Total Entries: 11*
